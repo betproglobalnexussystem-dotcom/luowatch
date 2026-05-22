@@ -14,8 +14,20 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/tv-shows/tv-shows.component').then(m => m.TvShowsComponent)
   },
   {
+    path: 'watch/:id',
+    loadComponent: () => import('./pages/watch/watch.component').then(m => m.WatchComponent)
+  },
+  {
     path: 'detail/:id',
-    loadComponent: () => import('./pages/detail/detail.component').then(m => m.DetailComponent)
+    redirectTo: m => `/watch/${m.params['id']}`
+  },
+  {
+    path: 'vj',
+    loadComponent: () => import('./pages/vj-dashboard/vj-dashboard.component').then(m => m.VjDashboardComponent)
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./pages/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
   },
   {
     path: 'search',

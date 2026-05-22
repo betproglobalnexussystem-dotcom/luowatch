@@ -8,7 +8,7 @@ import { Movie } from '../../models/movie.model';
   standalone: true,
   imports: [RouterLink, CommonModule],
   template: `
-    <a class="card" [routerLink]="['/detail', movie.id]">
+    <a class="card" [routerLink]="['/watch', movie.id]">
       <div class="card-cover">
         <img
           [src]="movie.poster"
@@ -19,14 +19,20 @@ import { Movie } from '../../models/movie.model';
         @if(movie.quality) {
           <span class="quality-badge">{{ movie.quality }}</span>
         }
+        @if(movie.vjName) {
+          <span class="vj-badge">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            {{ movie.vjName }}
+          </span>
+        }
         <div class="card-hover">
           <button class="play-btn" (click)="$event.stopPropagation()">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </button>
           <div class="hover-info">
             @if(movie.rating > 0) {
               <span class="hover-rating">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="#F5852F"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="#F5852F"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 {{ movie.rating | number:'1.1-1' }}
               </span>
             }
@@ -68,16 +74,36 @@ import { Movie } from '../../models/movie.model';
     }
     .quality-badge {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 7px;
+      right: 7px;
       background: linear-gradient(135deg, #FF271C, #F5852F);
       color: #fff;
       font-size: 9px;
       font-weight: 700;
-      padding: 2px 6px;
+      padding: 2px 5px;
       border-radius: 3px;
       letter-spacing: 0.5px;
       z-index: 2;
+    }
+    .vj-badge {
+      position: absolute;
+      bottom: 7px;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%);
+      color: rgba(255,255,255,0.85);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 4px 6px;
+      z-index: 2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.3px;
     }
     .card-hover {
       position: absolute;
@@ -91,8 +117,8 @@ import { Movie } from '../../models/movie.model';
       z-index: 3;
     }
     .play-btn {
-      width: 46px;
-      height: 46px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       background: rgba(255,255,255,0.95);
       color: #1a1c24;
@@ -110,7 +136,7 @@ import { Movie } from '../../models/movie.model';
       bottom: 8px;
       left: 8px;
       display: flex;
-      gap: 6px;
+      gap: 5px;
       align-items: center;
     }
     .hover-rating {
@@ -118,17 +144,17 @@ import { Movie } from '../../models/movie.model';
       align-items: center;
       gap: 3px;
       color: #F5852F;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
     }
     .hover-year {
       color: rgba(255,255,255,0.7);
-      font-size: 11px;
+      font-size: 10px;
     }
     .card-title {
-      margin-top: 8px;
+      margin-top: 7px;
       color: rgba(255,255,255,0.85);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;

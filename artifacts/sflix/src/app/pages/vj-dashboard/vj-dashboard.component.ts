@@ -17,7 +17,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
         <div class="sidebar-brand">
           <a routerLink="/" class="brand-logo">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="url(#vg)"/><polygon points="9 7 17 12 9 17" fill="white"/><defs><linearGradient id="vg" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#FF271C"/><stop offset="1" stop-color="#F5852F"/></linearGradient></defs></svg>
-            <span>SFlix</span>
+            <span>LUO WATCH</span>
           </a>
           <button class="sidebar-close" (click)="sidebarOpen.set(false)">✕</button>
         </div>

@@ -101,9 +101,9 @@ import { MovieService } from '../../services/movie.service';
       inset: 0;
       background: linear-gradient(
         180deg,
-        rgba(26,28,36,0.2) 0%,
-        rgba(26,28,36,0.1) 35%,
-        rgba(26,28,36,0.65) 65%,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0) 50%,
+        rgba(26,28,36,0.7) 80%,
         rgba(26,28,36,1) 100%
       );
       pointer-events: none;

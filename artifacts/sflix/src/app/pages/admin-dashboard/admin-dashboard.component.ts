@@ -18,7 +18,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
           <div class="brand-inner">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="url(#ag)"/><path d="M12 2l2.09 4.26L18 7.27l-3 2.92.71 4.14L12 12.17l-3.71 2.16.71-4.14L6 7.27l3.91-.01z" fill="white"/><defs><linearGradient id="ag" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
             <div>
-              <div class="brand-name">SFlix Admin</div>
+              <div class="brand-name">LUO WATCH Admin</div>
               <div class="brand-role">Super Admin</div>
             </div>
           </div>

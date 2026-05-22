@@ -56,6 +56,25 @@ import { MovieSectionComponent } from '../../components/movie-section/movie-sect
                   </div>
                 </div>
 
+                <div class="action-grid">
+                  <button class="action-tile" (click)="download()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Download</span>
+                  </button>
+                  <button class="action-tile" (click)="toggleShare()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    <span>Share</span>
+                  </button>
+                  <button class="action-tile" [class.liked]="liked()" (click)="liked.set(!liked())">
+                    <svg width="24" height="24" viewBox="0 0 24 24" [attr.fill]="liked() ? '#FF271C' : 'none'" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span>{{ liked() ? 'Liked' : 'Like' }}</span>
+                  </button>
+                  <button class="action-tile" (click)="nextMovie()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    <span>Next</span>
+                  </button>
+                </div>
+
                 <div class="movie-info-card">
                   <div class="movie-info-top">
                     <div class="mi-poster">
@@ -95,16 +114,6 @@ import { MovieSectionComponent } from '../../components/movie-section/movie-sect
                         <button class="act-btn act-play" (click)="playing.set(true)">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                           Play Now
-                        </button>
-                        <button class="act-btn act-dl">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                          Download
-                        </button>
-                        <button class="act-icon-btn" [class.liked]="liked()" (click)="liked.set(!liked())">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        </button>
-                        <button class="act-icon-btn" (click)="toggleShare()">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                         </button>
                       </div>
                     </div>
@@ -349,11 +358,29 @@ import { MovieSectionComponent } from '../../components/movie-section/movie-sect
       display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; padding: 9px 20px; border-radius: 22px; border: none; cursor: pointer; transition: all 0.2s;
     }
     .act-play { background: linear-gradient(135deg, #FF271C, #F5852F); color: #fff; box-shadow: 0 3px 14px rgba(255,39,28,0.4); &:hover { transform: translateY(-1px); } }
-    .act-dl { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.15); &:hover { background: rgba(255,255,255,0.17); } }
-    .act-icon-btn {
-      width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
-      &:hover { background: rgba(255,255,255,0.16); color: #fff; }
-      &.liked { background: rgba(255,39,28,0.2); color: #FF271C; border-color: rgba(255,39,28,0.4); }
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .action-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #1a1c24;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px 8px;
+      color: rgba(255,255,255,0.75);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      font-weight: 600;
+      span { letter-spacing: 0.3px; }
+      &:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+      &.liked { color: #FF271C; border-color: rgba(255,39,28,0.4); background: rgba(255,39,28,0.1); }
     }
     .section-title {
       font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 14px;
@@ -489,6 +516,19 @@ export class WatchComponent implements OnInit {
   toggleShare() {
     if (navigator.share) {
       navigator.share({ title: this.currentMovie()?.title, url: window.location.href });
+    }
+  }
+
+  download() {
+    const movie = this.currentMovie();
+    if (movie) alert(`Downloading: ${movie.title}`);
+  }
+
+  nextMovie() {
+    const rel = this.related();
+    if (rel.length > 0) {
+      this.route.params.subscribe().unsubscribe();
+      window.location.href = `/watch/${rel[0].id}`;
     }
   }
 

@@ -12,7 +12,7 @@ import { RouterLink } from '@angular/router';
           <div class="footer-brand">
             <a routerLink="/" class="footer-logo">
               <svg width="80" height="26" viewBox="0 0 80 26" fill="none">
-                <text x="0" y="21" font-family="Inter, sans-serif" font-weight="800" font-size="22" fill="url(#fgrad)">SFlix</text>
+                <text x="0" y="21" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="url(#fgrad)">LUO WATCH</text>
                 <defs>
                   <linearGradient id="fgrad" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stop-color="#FF271C"/>
@@ -67,8 +67,8 @@ import { RouterLink } from '@angular/router';
         </div>
 
         <div class="footer-bottom">
-          <p class="copyright">© 2024 SFlix. All rights reserved. Made for entertainment.</p>
-          <p class="disclaimer">SFlix does not store any files on its server. All content is provided by non-affiliated third parties.</p>
+          <p class="copyright">© 2024 LUO WATCH. All rights reserved. Made for entertainment.</p>
+          <p class="disclaimer">LUO WATCH does not store any files on its server. All content is provided by non-affiliated third parties.</p>
         </div>
       </div>
     </footer>

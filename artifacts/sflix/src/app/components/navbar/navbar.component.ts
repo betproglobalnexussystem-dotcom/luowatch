@@ -27,6 +27,8 @@ import { Router } from '@angular/router';
             <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">Home</a>
             <a routerLink="/movies" routerLinkActive="active" class="nav-link">Movies</a>
             <a routerLink="/tv-shows" routerLinkActive="active" class="nav-link">TV Shows</a>
+            <a routerLink="/vj" routerLinkActive="active" class="nav-link">VJ Dashboard</a>
+            <a routerLink="/admin" routerLinkActive="active" class="nav-link">Admin</a>
             <div class="nav-dropdown" (mouseenter)="showExplore.set(true)" (mouseleave)="showExplore.set(false)">
               <button class="nav-link dropdown-btn">
                 Explore
@@ -106,6 +108,8 @@ import { Router } from '@angular/router';
           <a routerLink="/" class="mobile-link" (click)="mobileOpen.set(false)">Home</a>
           <a routerLink="/movies" class="mobile-link" (click)="mobileOpen.set(false)">Movies</a>
           <a routerLink="/tv-shows" class="mobile-link" (click)="mobileOpen.set(false)">TV Shows</a>
+          <a routerLink="/vj" class="mobile-link" (click)="mobileOpen.set(false)">VJ Dashboard</a>
+          <a routerLink="/admin" class="mobile-link" (click)="mobileOpen.set(false)">Admin</a>
           <a routerLink="/movies" class="mobile-link" (click)="mobileOpen.set(false)">Action</a>
           <a routerLink="/movies" class="mobile-link" (click)="mobileOpen.set(false)">Horror</a>
           <div class="mobile-search">

@@ -56,19 +56,6 @@ import { MovieSectionComponent } from '../../components/movie-section/movie-sect
                   </div>
                 </div>
 
-                <div class="server-bar">
-                  <span class="server-label">Select Server:</span>
-                  <div class="server-btns">
-                    @for(s of servers; track s.label; let i = $index) {
-                      <button
-                        class="server-btn"
-                        [class.active]="activeServer() === i"
-                        (click)="activeServer.set(i)"
-                      >{{ s.label }}</button>
-                    }
-                  </div>
-                </div>
-
                 <div class="movie-info-card">
                   <div class="movie-info-top">
                     <div class="mi-poster">
@@ -121,24 +108,6 @@ import { MovieSectionComponent } from '../../components/movie-section/movie-sect
                         </button>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                <div class="download-section">
-                  <h3 class="section-title">Download Links</h3>
-                  <div class="dl-grid">
-                    @for(dl of downloadLinks; track dl.quality) {
-                      <div class="dl-item">
-                        <div class="dl-info">
-                          <span class="dl-quality">{{ dl.quality }}</span>
-                          <span class="dl-size">{{ dl.size }}</span>
-                        </div>
-                        <button class="dl-btn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                          Download
-                        </button>
-                      </div>
-                    }
                   </div>
                 </div>
 
@@ -474,21 +443,7 @@ export class WatchComponent implements OnInit {
   related = signal<Movie[]>([]);
   playing = signal(false);
   liked = signal(false);
-  activeServer = signal(0);
   newComment = '';
-
-  servers = [
-    { label: 'Server 1 (HD)' },
-    { label: 'Server 2 (4K)' },
-    { label: 'Server 3 (CAM)' },
-  ];
-
-  downloadLinks = [
-    { quality: '4K Ultra HD', size: '8.2 GB' },
-    { quality: '1080p Full HD', size: '3.4 GB' },
-    { quality: '720p HD', size: '1.8 GB' },
-    { quality: '480p SD', size: '820 MB' },
-  ];
 
   comments = [
     { id: 1, name: 'Marcus L.', text: 'Absolutely brilliant! One of the best films of the decade.', time: '2 hours ago' },

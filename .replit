@@ -49,7 +49,7 @@ args = "PORT=5000 pnpm --filter @workspace/api-server run dev"
 waitForPort = 5000
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]
@@ -63,3 +63,6 @@ externalPort = 5000
 [[ports]]
 localPort = 25971
 externalPort = 80
+
+[nix]
+channel = "stable-25_05"

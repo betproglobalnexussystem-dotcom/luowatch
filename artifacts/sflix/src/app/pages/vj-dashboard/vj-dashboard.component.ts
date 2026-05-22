@@ -59,7 +59,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
           <div class="header-right">
             <div class="header-wallet">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              ${{ walletBalance | number:'1.2-2' }}
+              {{ '$' + (walletBalance | number:'1.2-2') }}
             </div>
           </div>
         </header>
@@ -108,7 +108,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                           <div class="mini-title">{{ t.description }}</div>
                           <div class="mini-meta">{{ t.date }}</div>
                         </div>
-                        <span class="tx-amount" [class]="t.type">${{ t.amount | number:'1.2-2' }}</span>
+                        <span class="tx-amount" [class]="t.type">{{ '$' + (t.amount | number:'1.2-2') }}</span>
                       </div>
                     }
                   </div>
@@ -438,8 +438,8 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
               <h2>Wallet</h2>
               <div class="wallet-hero">
                 <div class="wallet-bal-label">Available Balance</div>
-                <div class="wallet-bal">${{ walletBalance | number:'1.2-2' }}</div>
-                <div class="wallet-bal-sub">Total earned: ${{ totalEarned | number:'1.2-2' }}</div>
+                <div class="wallet-bal">{{ '$' + (walletBalance | number:'1.2-2') }}</div>
+                <div class="wallet-bal-sub">Total earned: {{ '$' + (totalEarned | number:'1.2-2') }}</div>
               </div>
               <div class="wallet-grid">
                 <div class="form-card">
@@ -478,7 +478,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     </div>
                     <div>
-                      <div class="ws-val">${{ totalEarned | number:'1.2-2' }}</div>
+                      <div class="ws-val">{{ '$' + (totalEarned | number:'1.2-2') }}</div>
                       <div class="ws-lbl">Total Earned</div>
                     </div>
                   </div>
@@ -496,7 +496,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                     </div>
                     <div>
-                      <div class="ws-val">${{ walletBalance | number:'1.2-2' }}</div>
+                      <div class="ws-val">{{ '$' + (walletBalance | number:'1.2-2') }}</div>
                       <div class="ws-lbl">Available</div>
                     </div>
                   </div>
@@ -517,7 +517,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                         <td>{{ t.date }}</td>
                         <td class="fw">{{ t.description }}</td>
                         <td><span class="type-badge" [class]="t.type">{{ t.type }}</span></td>
-                        <td class="amount" [class]="t.type">${{ t.amount | number:'1.2-2' }}</td>
+                        <td class="amount" [class]="t.type">{{ '$' + (t.amount | number:'1.2-2') }}</td>
                         <td><span class="status-pill" [class]="t.status">{{ t.status }}</span></td>
                       </tr>
                     }

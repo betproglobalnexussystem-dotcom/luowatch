@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
@@ -39,6 +39,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
   `]
 })
 export class AppComponent {
+  private router = inject(Router);
+
   isDashboard = toSignal(
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
@@ -46,6 +48,4 @@ export class AppComponent {
     ),
     { initialValue: false }
   );
-
-  constructor(private router: Router) {}
 }

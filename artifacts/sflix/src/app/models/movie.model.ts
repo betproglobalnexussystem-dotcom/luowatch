@@ -52,6 +52,7 @@ export interface VJ {
   joinDate: string;
   totalMovies: number;
   totalViews: number;
+  downloads: number;
   balance: number;
   status: 'active' | 'suspended';
 }

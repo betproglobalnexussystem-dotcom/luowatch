@@ -121,177 +121,90 @@ import { Router } from '@angular/router';
   `,
   styles: [`
     .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: linear-gradient(180deg, rgba(26,28,36,0.95) 0%, rgba(26,28,36,0) 100%);
-      transition: background 0.3s ease;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
       padding: 0 24px;
+      background: linear-gradient(135deg, rgba(6,78,59,0.93) 0%, rgba(16,185,129,0.68) 50%, rgba(5,150,105,0.9) 100%);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-bottom: 1px solid rgba(52,211,153,0.28);
+      box-shadow: 0 4px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
     }
     .header.scrolled {
-      background: rgba(26,28,36,0.98);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      background: linear-gradient(135deg, rgba(4,47,36,0.97) 0%, rgba(6,95,70,0.96) 100%);
+      backdrop-filter: blur(28px) saturate(220%);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(52,211,153,0.18);
     }
     .header-inner {
-      max-width: 1400px;
-      margin: 0 auto;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
+      max-width: 1400px; margin: 0 auto; height: 64px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
     }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 40px;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-      flex-shrink: 0;
-    }
-    .desktop-nav {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .header-left { display: flex; align-items: center; gap: 40px; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+    .desktop-nav { display: flex; align-items: center; gap: 4px; }
     .nav-link {
-      color: rgba(255,255,255,0.8);
-      font-size: 14px;
-      font-weight: 500;
-      padding: 8px 12px;
-      border-radius: 6px;
-      transition: color 0.2s, background 0.2s;
-      text-decoration: none;
-      white-space: nowrap;
-      &:hover, &.active {
-        color: #fff;
-        background: rgba(255,255,255,0.08);
-      }
+      color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 500;
+      padding: 8px 12px; border-radius: 6px; transition: color 0.2s, background 0.2s;
+      text-decoration: none; white-space: nowrap;
+      &:hover, &.active { color: #fff; background: rgba(52,211,153,0.2); }
     }
     .dropdown-btn {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      color: rgba(255,255,255,0.8);
-      font-size: 14px;
-      font-weight: 500;
-      padding: 8px 12px;
-      border-radius: 6px;
-      transition: color 0.2s, background 0.2s;
-      cursor: pointer;
-      background: none;
-      border: none;
-      &:hover { color: #fff; background: rgba(255,255,255,0.08); }
-      svg { opacity: 0.7; }
+      display: flex; align-items: center; gap: 5px;
+      color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 500;
+      padding: 8px 12px; border-radius: 6px; transition: color 0.2s, background 0.2s;
+      cursor: pointer; background: none; border: none;
+      &:hover { color: #fff; background: rgba(52,211,153,0.2); }
+      svg { opacity: 0.75; }
     }
-    .nav-dropdown {
-      position: relative;
-    }
+    .nav-dropdown { position: relative; }
     .dropdown-menu {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      background: #1e2130;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 8px;
-      min-width: 160px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
-      z-index: 100;
+      position: absolute; top: calc(100% + 8px); left: 0;
+      background: rgba(4,47,36,0.96); backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(52,211,153,0.22); border-radius: 10px; padding: 8px;
+      min-width: 160px; box-shadow: 0 16px 40px rgba(0,0,0,0.65); z-index: 100;
     }
     .dropdown-item {
-      display: block;
-      padding: 9px 12px;
-      color: rgba(255,255,255,0.75);
-      font-size: 14px;
-      border-radius: 6px;
-      transition: all 0.15s;
-      &:hover { color: #fff; background: rgba(255,255,255,0.1); }
+      display: block; padding: 9px 12px; color: rgba(255,255,255,0.82);
+      font-size: 14px; border-radius: 6px; transition: all 0.15s; text-decoration: none;
+      &:hover { color: #fff; background: rgba(52,211,153,0.18); }
     }
     .icon-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      color: rgba(255,255,255,0.8);
-      transition: all 0.2s;
-      background: none;
-      border: none;
-      cursor: pointer;
-      &:hover { color: #fff; background: rgba(255,255,255,0.12); }
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 50%; color: rgba(255,255,255,0.88);
+      transition: all 0.2s; background: none; border: none; cursor: pointer;
+      &:hover { color: #fff; background: rgba(52,211,153,0.22); }
     }
-    .search-wrap {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .search-wrap { display: flex; align-items: center; gap: 4px; }
     .search-input {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      padding: 6px 14px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-      width: 220px;
-      transition: all 0.2s;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(52,211,153,0.28);
+      border-radius: 20px; padding: 6px 14px; color: #fff; font-size: 14px;
+      outline: none; width: 220px; transition: all 0.2s;
       &::placeholder { color: rgba(255,255,255,0.45); }
-      &:focus { border-color: rgba(255,80,50,0.6); background: rgba(255,255,255,0.15); }
+      &:focus { border-color: rgba(52,211,153,0.6); background: rgba(255,255,255,0.13); }
     }
     .lang-selector {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.8);
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.5px;
-      &:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+      display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+      border: 1px solid rgba(52,211,153,0.32); border-radius: 20px;
+      font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9);
+      cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+      &:hover { border-color: rgba(52,211,153,0.65); color: #fff; background: rgba(52,211,153,0.12); }
     }
     .mobile-menu {
-      background: rgba(20,22,30,0.98);
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding: 12px 0;
+      background: rgba(4,40,30,0.97); backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(52,211,153,0.15); padding: 12px 0;
     }
     .mobile-link {
-      display: block;
-      padding: 12px 24px;
-      color: rgba(255,255,255,0.85);
-      font-size: 15px;
-      font-weight: 500;
-      transition: color 0.2s;
-      text-decoration: none;
-      &:hover { color: #fff; background: rgba(255,255,255,0.06); }
+      display: block; padding: 12px 24px; color: rgba(255,255,255,0.88);
+      font-size: 15px; font-weight: 500; transition: color 0.2s; text-decoration: none;
+      &:hover { color: #fff; background: rgba(52,211,153,0.12); }
     }
     .mobile-search {
       padding: 12px 24px;
       input {
-        width: 100%;
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 20px;
-        padding: 10px 16px;
-        color: #fff;
-        font-size: 14px;
-        outline: none;
+        width: 100%; background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(52,211,153,0.22); border-radius: 20px;
+        padding: 10px 16px; color: #fff; font-size: 14px; outline: none;
         &::placeholder { color: rgba(255,255,255,0.4); }
       }
     }

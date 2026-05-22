@@ -175,14 +175,14 @@ export class MovieService {
 
   getVJs(): VJ[] {
     return [
-      { id: 1, name: 'CineVault', email: 'cinevault@email.com', joinDate: '2024-01-15', totalMovies: 42, totalViews: 715600, balance: 1240.50, status: 'active' },
-      { id: 2, name: 'MarvelFlix', email: 'marvelflix@email.com', joinDate: '2024-02-03', totalMovies: 28, totalViews: 894500, balance: 2180.75, status: 'active' },
-      { id: 3, name: 'ActionZone', email: 'actionzone@email.com', joinDate: '2024-03-10', totalMovies: 65, totalViews: 530200, balance: 890.00, status: 'active' },
-      { id: 4, name: 'DragonVJ', email: 'dragonvj@email.com', joinDate: '2024-01-28', totalMovies: 18, totalViews: 748000, balance: 1650.25, status: 'active' },
-      { id: 5, name: 'HorrorVault', email: 'horrorvault@email.com', joinDate: '2024-04-05', totalMovies: 54, totalViews: 407000, balance: 620.00, status: 'active' },
-      { id: 6, name: 'TVKing', email: 'tvking@email.com', joinDate: '2023-11-20', totalMovies: 83, totalViews: 1107300, balance: 3200.00, status: 'active' },
-      { id: 7, name: 'SciFiHub', email: 'scifihub@email.com', joinDate: '2024-02-14', totalMovies: 31, totalViews: 381200, balance: 540.80, status: 'suspended' },
-      { id: 8, name: 'ThrillerVJ', email: 'thrillervj@email.com', joinDate: '2024-05-01', totalMovies: 22, totalViews: 207000, balance: 315.00, status: 'active' },
+      { id: 1, name: 'CineVault', email: 'cinevault@email.com', joinDate: '2024-01-15', totalMovies: 42, totalViews: 715600, downloads: 1247, balance: 1240.50, status: 'active' },
+      { id: 2, name: 'MarvelFlix', email: 'marvelflix@email.com', joinDate: '2024-02-03', totalMovies: 28, totalViews: 894500, downloads: 3812, balance: 2180.75, status: 'active' },
+      { id: 3, name: 'ActionZone', email: 'actionzone@email.com', joinDate: '2024-03-10', totalMovies: 65, totalViews: 530200, downloads: 892, balance: 890.00, status: 'active' },
+      { id: 4, name: 'DragonVJ', email: 'dragonvj@email.com', joinDate: '2024-01-28', totalMovies: 18, totalViews: 748000, downloads: 2156, balance: 1650.25, status: 'active' },
+      { id: 5, name: 'HorrorVault', email: 'horrorvault@email.com', joinDate: '2024-04-05', totalMovies: 54, totalViews: 407000, downloads: 607, balance: 620.00, status: 'active' },
+      { id: 6, name: 'TVKing', email: 'tvking@email.com', joinDate: '2023-11-20', totalMovies: 83, totalViews: 1107300, downloads: 5490, balance: 3200.00, status: 'active' },
+      { id: 7, name: 'SciFiHub', email: 'scifihub@email.com', joinDate: '2024-02-14', totalMovies: 31, totalViews: 381200, downloads: 443, balance: 540.80, status: 'suspended' },
+      { id: 8, name: 'ThrillerVJ', email: 'thrillervj@email.com', joinDate: '2024-05-01', totalMovies: 22, totalViews: 207000, downloads: 318, balance: 315.00, status: 'active' },
     ];
   }
 

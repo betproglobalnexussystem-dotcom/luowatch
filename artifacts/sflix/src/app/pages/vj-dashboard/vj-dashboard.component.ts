@@ -435,72 +435,83 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
 
           @if(activeSection() === 'wallet') {
             <div class="section-body">
-              <h2>Wallet</h2>
-              <div class="wallet-hero">
-                <div class="wallet-bal-label">Available Balance</div>
-                <div class="wallet-bal">{{ '$' + (walletBalance | number:'1.2-2') }}</div>
-                <div class="wallet-bal-sub">Total earned: {{ '$' + (totalEarned | number:'1.2-2') }}</div>
-              </div>
-              <div class="wallet-grid">
-                <div class="form-card">
-                  <h3>Withdraw Funds</h3>
-                  <div class="form-group">
-                    <label>Amount ($)</label>
-                    <input type="number" [(ngModel)]="withdrawForm.amount" placeholder="Enter amount" class="form-input">
-                  </div>
-                  <div class="form-group">
-                    <label>Payment Method</label>
-                    <select [(ngModel)]="withdrawForm.method" class="form-input">
-                      <option value="">Select method</option>
-                      <option>Bank Transfer</option>
-                      <option>PayPal</option>
-                      <option>Payoneer</option>
-                      <option>Crypto (USDT)</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label>Account Details</label>
-                    <input type="text" [(ngModel)]="withdrawForm.account" placeholder="Bank/Account number" class="form-input">
-                  </div>
-                  <div class="form-actions">
-                    <button class="btn-primary" (click)="requestWithdraw()">Request Withdrawal</button>
-                  </div>
-                  @if(withdrawSuccess()) {
-                    <div class="success-msg">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                      Withdrawal request submitted!
+              <div class="pro-wallet">
+
+                <div class="pwallet-hero">
+                  <div class="pwh-content">
+                    <div class="pwh-left">
+                      <div class="pwh-label">Available Balance</div>
+                      <div class="pwh-amount">{{ '$' + (walletBalance | number:'1.2-2') }}</div>
+                      <div class="pwh-downloads">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        {{ downloadsCount | number }} total downloads
+                      </div>
                     </div>
-                  }
+                    <button class="btn-withdraw" (click)="openWithdrawModal()">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Withdraw
+                    </button>
+                  </div>
+                  <div class="pwh-decor d1"></div>
+                  <div class="pwh-decor d2"></div>
                 </div>
-                <div class="wallet-stats-col">
-                  <div class="wallet-stat-card">
-                    <div class="ws-icon green">
+
+                <div class="pwallet-stats">
+                  <div class="pws-card">
+                    <div class="pws-icon pws-green">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     </div>
-                    <div>
-                      <div class="ws-val">{{ '$' + (totalEarned | number:'1.2-2') }}</div>
-                      <div class="ws-lbl">Total Earned</div>
-                    </div>
+                    <div class="pws-val">{{ '$' + (totalEarned | number:'1.2-2') }}</div>
+                    <div class="pws-lbl">Total Earned</div>
                   </div>
-                  <div class="wallet-stat-card">
-                    <div class="ws-icon orange">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <div class="pws-card">
+                    <div class="pws-icon pws-blue">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
                     </div>
-                    <div>
-                      <div class="ws-val">$500.00</div>
-                      <div class="ws-lbl">Total Withdrawn</div>
-                    </div>
+                    <div class="pws-val">{{ downloadsCount | number }}</div>
+                    <div class="pws-lbl">Total Downloads</div>
                   </div>
-                  <div class="wallet-stat-card">
-                    <div class="ws-icon blue">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  <div class="pws-card">
+                    <div class="pws-icon pws-orange">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </div>
-                    <div>
-                      <div class="ws-val">{{ '$' + (walletBalance | number:'1.2-2') }}</div>
-                      <div class="ws-lbl">Available</div>
+                    <div class="pws-val">$500.00</div>
+                    <div class="pws-lbl">Total Withdrawn</div>
+                  </div>
+                  <div class="pws-card">
+                    <div class="pws-icon pws-purple">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 7 8 2"/></svg>
                     </div>
+                    <div class="pws-val">{{ myMovies.length }}</div>
+                    <div class="pws-lbl">Movies Uploaded</div>
                   </div>
                 </div>
+
+                <div class="pwallet-movies">
+                  <div class="pwm-header">
+                    <h3>Downloaded Movies</h3>
+                    <span class="pwm-count">{{ downloadsCount | number }} downloads</span>
+                  </div>
+                  <div class="pwm-list">
+                    @for(m of downloadedMovies; track m.id) {
+                      <div class="pwm-item">
+                        <img [src]="m.poster" class="pwm-poster" (error)="onImgError($event)" alt="">
+                        <div class="pwm-info">
+                          <div class="pwm-title">{{ m.title }}</div>
+                          <div class="pwm-meta">{{ m.year }} · {{ m.quality }}</div>
+                        </div>
+                        <div class="pwm-right">
+                          <div class="pwm-dl-count">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
+                            {{ m.dlCount | number }}
+                          </div>
+                          <div class="pwm-earn">{{ '+' + '$' + (m.dlCount * 0.01 | number:'1.2-2') }}</div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
               </div>
             </div>
           }
@@ -533,6 +544,71 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
       @if(sidebarOpen()) {
         <div class="sidebar-backdrop" (click)="sidebarOpen.set(false)"></div>
       }
+
+      @if(showWithdrawModal()) {
+        <div class="mm-overlay" (click)="closeWithdrawModal()">
+          <div class="mm-modal" (click)="$event.stopPropagation()">
+            @if(withdrawStep() === 'form') {
+              <div class="mm-header">
+                <div class="mm-title">
+                  <svg class="mm-title-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
+                  Withdraw to Mobile Money
+                </div>
+                <button class="mm-close" (click)="closeWithdrawModal()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <div class="mm-body">
+                <div class="mm-avail-bar">
+                  <span class="mm-avail-lbl">Available Balance</span>
+                  <span class="mm-avail-val">{{ '$' + (walletBalance | number:'1.2-2') }}</span>
+                </div>
+                <div class="mm-section-lbl">Select Network</div>
+                <div class="mm-networks">
+                  @for(net of mmNetworks; track net.id) {
+                    <button class="mm-net" [class.active]="mobileMoney.network === net.id" (click)="mobileMoney.network = net.id">
+                      <span class="mm-net-dot" [style.background]="net.color"></span>
+                      <span class="mm-net-name">{{ net.name }}</span>
+                      @if(mobileMoney.network === net.id) {
+                        <svg class="mm-net-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      }
+                    </button>
+                  }
+                </div>
+                <div class="mm-field">
+                  <label class="mm-label">Phone Number</label>
+                  <input class="mm-input" type="tel" [(ngModel)]="mobileMoney.phone" placeholder="+254 7XX XXX XXX">
+                </div>
+                <div class="mm-field">
+                  <label class="mm-label">Amount (USD)</label>
+                  <div class="mm-amount-wrap">
+                    <span class="mm-prefix">$</span>
+                    <input class="mm-input" type="number" [(ngModel)]="mobileMoney.amount" placeholder="0.00" min="1" [max]="walletBalance">
+                  </div>
+                  @if(isOverBalance()) {
+                    <div class="mm-error">Exceeds available balance</div>
+                  }
+                </div>
+                <button class="mm-submit" (click)="submitMobileMoney()"
+                  [disabled]="isWithdrawDisabled()">
+                  Withdraw Funds
+                </button>
+              </div>
+            }
+            @if(withdrawStep() === 'success') {
+              <div class="mm-success">
+                <div class="mm-check-circle">
+                  <svg class="mm-check-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h3>Withdrawal Sent!</h3>
+                <p>{{ '$' + (lastWithdrawnAmount | number:'1.2-2') }} sent to {{ mobileMoney.phone }}</p>
+                <p class="mm-via">via {{ getNetworkName(mobileMoney.network) }}</p>
+                <button class="mm-done-btn" (click)="closeWithdrawModal()">Done</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
   `,
   styleUrl: './vj-dashboard.component.css'
@@ -547,9 +623,23 @@ export class VjDashboardComponent {
   heroSuccess = signal(false);
   withdrawSuccess = signal(false);
 
+  showWithdrawModal = signal(false);
+  withdrawStep = signal<'form' | 'success'>('form');
+
   vjName = 'CineVault';
   walletBalance = 1240.50;
   totalEarned = 1740.50;
+  downloadsCount = 1247;
+  lastWithdrawnAmount = 0;
+  mobileMoney = { network: '', phone: '', amount: 0 };
+  downloadedMovies: any[] = [];
+
+  mmNetworks = [
+    { id: 'mpesa', name: 'M-Pesa', color: '#00a651' },
+    { id: 'airtel', name: 'Airtel Money', color: '#e40000' },
+    { id: 'tkash', name: 'T-Kash', color: '#0099d4' },
+    { id: 'equitel', name: 'Equitel', color: '#1a3a6b' },
+  ];
 
   myMovies: Movie[] = [];
   mySeries: Series[] = [];
@@ -594,6 +684,10 @@ export class VjDashboardComponent {
     this.myTransactions = this.movieService.getTransactions().filter(t => t.from === this.vjName);
     this.activities = this.movieService.getActivities();
     this.heroSlides = this.movieService.getHeroSlides();
+    const dlCounts = [312, 248, 187, 156, 143, 98, 72, 31];
+    this.downloadedMovies = this.movieService.getAllMovies().slice(0, 8).map((m, i) => ({
+      ...m, dlCount: dlCounts[i] ?? Math.floor(Math.random() * 200 + 20)
+    }));
   }
 
   navigate(section: VJSection) {
@@ -629,6 +723,31 @@ export class VjDashboardComponent {
       this.withdrawSuccess.set(true);
       this.withdrawForm = { amount: 0, method: '', account: '' };
     }
+  }
+
+  openWithdrawModal() {
+    this.withdrawStep.set('form');
+    this.mobileMoney = { network: '', phone: '', amount: 0 };
+    this.showWithdrawModal.set(true);
+  }
+
+  closeWithdrawModal() { this.showWithdrawModal.set(false); }
+
+  submitMobileMoney() {
+    if (this.mobileMoney.network && this.mobileMoney.phone && this.mobileMoney.amount > 0 && this.mobileMoney.amount <= this.walletBalance) {
+      this.lastWithdrawnAmount = this.mobileMoney.amount;
+      this.walletBalance -= this.mobileMoney.amount;
+      this.withdrawStep.set('success');
+    }
+  }
+
+  isOverBalance(): boolean { return this.mobileMoney.amount > this.walletBalance; }
+  isWithdrawDisabled(): boolean {
+    return !this.mobileMoney.network || !this.mobileMoney.phone || this.mobileMoney.amount <= 0 || this.mobileMoney.amount > this.walletBalance;
+  }
+
+  getNetworkName(id: string): string {
+    return this.mmNetworks.find(n => n.id === id)?.name ?? id;
   }
 
   onImgError(event: Event) { (event.target as HTMLImageElement).style.display = 'none'; }

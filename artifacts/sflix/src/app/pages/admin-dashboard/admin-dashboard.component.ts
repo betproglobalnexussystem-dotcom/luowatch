@@ -227,21 +227,31 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
               </div>
               <div class="table-wrap">
                 <table class="data-table">
-                  <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Joined</th><th>Movies</th><th>Total Views</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
+                  <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Joined</th><th>Movies</th><th>Downloads</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
                   <tbody>
                     @for(v of filteredVJs; track v.id; let i = $index) {
                       <tr>
                         <td>{{ i + 1 }}</td>
-                        <td class="fw">{{ v.name }}</td>
+                        <td>
+                          <div class="vj-name-cell">
+                            <div class="vj-mini-avatar">{{ v.name[0] }}</div>
+                            <span class="fw">{{ v.name }}</span>
+                          </div>
+                        </td>
                         <td>{{ v.email }}</td>
                         <td>{{ v.joinDate }}</td>
                         <td>{{ v.totalMovies }}</td>
-                        <td>{{ v.totalViews | number }}</td>
-                        <td>{{ '$' + (v.balance | number:'1.2-2') }}</td>
+                        <td>
+                          <div class="dl-cell">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
+                            {{ v.downloads | number }}
+                          </div>
+                        </td>
+                        <td><span class="vj-balance">{{ '$' + (v.balance | number:'1.2-2') }}</span></td>
                         <td><span class="status-pill" [class]="v.status">{{ v.status }}</span></td>
                         <td>
                           <div class="action-btns">
-                            <button class="act-btn-sm edit">View</button>
+                            <button class="act-btn-sm view" (click)="openVJDetail(v)">View Details</button>
                             <button class="act-btn-sm" [class]="v.status === 'suspended' ? 'edit' : 'delete'" (click)="toggleVJStatus(v)">{{ v.status === 'suspended' ? 'Activate' : 'Suspend' }}</button>
                           </div>
                         </td>
@@ -449,6 +459,168 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
       @if(sidebarOpen()) {
         <div class="sidebar-backdrop" (click)="sidebarOpen.set(false)"></div>
       }
+
+      @if(showVJDetail() && selectedVJ()) {
+        <div class="vdp-overlay" (click)="closeVJDetail()">
+          <div class="vdp-panel" (click)="$event.stopPropagation()">
+            <div class="vdp-head">
+              <div class="vdp-avatar">{{ selectedVJ()!.name[0] }}</div>
+              <div class="vdp-title-block">
+                <h2>{{ selectedVJ()!.name }}</h2>
+                <span class="status-pill" [class]="selectedVJ()!.status">{{ selectedVJ()!.status }}</span>
+              </div>
+              <button class="vdp-close" (click)="closeVJDetail()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div class="vdp-tabs">
+              <button class="vdp-tab" [class.active]="vjDetailTab() === 'overview'" (click)="vjDetailTab.set('overview')">Overview</button>
+              <button class="vdp-tab" [class.active]="vjDetailTab() === 'wallet'" (click)="vjDetailTab.set('wallet')">Wallet</button>
+              <button class="vdp-tab" [class.active]="vjDetailTab() === 'account'" (click)="vjDetailTab.set('account')">Account</button>
+            </div>
+
+            <div class="vdp-body">
+
+              @if(vjDetailTab() === 'overview') {
+                <div class="vdp-stats-grid">
+                  <div class="vds-card">
+                    <div class="vds-val">{{ selectedVJ()!.totalMovies }}</div>
+                    <div class="vds-lbl">Movies</div>
+                  </div>
+                  <div class="vds-card">
+                    <div class="vds-val">{{ selectedVJ()!.totalViews | number }}</div>
+                    <div class="vds-lbl">Total Views</div>
+                  </div>
+                  <div class="vds-card highlight">
+                    <div class="vds-val">{{ selectedVJ()!.downloads | number }}</div>
+                    <div class="vds-lbl">Downloads</div>
+                  </div>
+                  <div class="vds-card green">
+                    <div class="vds-val">{{ '$' + (selectedVJ()!.balance | number:'1.2-2') }}</div>
+                    <div class="vds-lbl">Balance</div>
+                  </div>
+                </div>
+                <div class="vdp-info-list">
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Email</span><span class="vdp-info-val">{{ selectedVJ()!.email }}</span></div>
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Joined</span><span class="vdp-info-val">{{ selectedVJ()!.joinDate }}</span></div>
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Total Movies</span><span class="vdp-info-val">{{ selectedVJ()!.totalMovies }}</span></div>
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Downloads</span><span class="vdp-info-val">{{ selectedVJ()!.downloads | number }}</span></div>
+                </div>
+              }
+
+              @if(vjDetailTab() === 'wallet') {
+                <div class="vdw-hero">
+                  <div>
+                    <div class="vdwh-lbl">Wallet Balance</div>
+                    <div class="vdwh-amt">{{ '$' + (selectedVJ()!.balance | number:'1.2-2') }}</div>
+                  </div>
+                  <div class="vdwh-sub">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
+                    {{ selectedVJ()!.downloads | number }} downloads
+                  </div>
+                </div>
+
+                <div class="vdw-actions-row">
+                  <button class="vdw-btn add" (click)="showAddModal.set(!showAddModal()); showDeductModal.set(false); vjAdjustAmount = 0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    Add Funds
+                  </button>
+                  <button class="vdw-btn deduct" (click)="showDeductModal.set(!showDeductModal()); showAddModal.set(false); vjAdjustAmount = 0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    Deduct Funds
+                  </button>
+                </div>
+
+                @if(showAddModal()) {
+                  <div class="vdw-form-card add">
+                    <h4>Add Funds to {{ selectedVJ()!.name }}</h4>
+                    <div class="form-group">
+                      <label>Amount ($)</label>
+                      <input type="number" [(ngModel)]="vjAdjustAmount" placeholder="0.00" class="form-input" min="0">
+                    </div>
+                    <div class="form-group">
+                      <label>Note (optional)</label>
+                      <input type="text" [(ngModel)]="vjAdjustNote" placeholder="Reason..." class="form-input">
+                    </div>
+                    <div class="form-actions">
+                      <button class="btn-cancel" (click)="showAddModal.set(false)">Cancel</button>
+                      <button class="btn-add" (click)="addFunds()">Add Funds</button>
+                    </div>
+                    @if(adjustSuccess()) {
+                      <div class="success-msg">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Funds added successfully!
+                      </div>
+                    }
+                  </div>
+                }
+
+                @if(showDeductModal()) {
+                  <div class="vdw-form-card deduct">
+                    <h4>Deduct Funds from {{ selectedVJ()!.name }}</h4>
+                    <div class="form-group">
+                      <label>Amount ($)</label>
+                      <input type="number" [(ngModel)]="vjAdjustAmount" placeholder="0.00" class="form-input" min="0" [max]="selectedVJ()!.balance">
+                    </div>
+                    <div class="form-group">
+                      <label>Reason</label>
+                      <input type="text" [(ngModel)]="vjAdjustNote" placeholder="Reason for deduction..." class="form-input">
+                    </div>
+                    <div class="form-actions">
+                      <button class="btn-cancel" (click)="showDeductModal.set(false)">Cancel</button>
+                      <button class="btn-deduct" (click)="deductFunds()">Deduct Funds</button>
+                    </div>
+                    @if(adjustSuccess()) {
+                      <div class="success-msg">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Funds updated!
+                      </div>
+                    }
+                  </div>
+                }
+
+                <h4 class="vdw-txn-title">Recent Transactions</h4>
+                <div class="vdw-txns">
+                  @for(t of getVJTransactions(selectedVJ()!.id); track t.id) {
+                    <div class="vdw-txn-row">
+                      <div class="vdw-txn-icon" [class]="t.type">{{ t.type === 'earning' ? '+' : '−' }}</div>
+                      <div class="vdw-txn-info">
+                        <div class="vdw-txn-desc">{{ t.description }}</div>
+                        <div class="vdw-txn-date">{{ t.date }}</div>
+                      </div>
+                      <div class="vdw-txn-amt" [class]="t.type">{{ '$' + (t.amount | number:'1.2-2') }}</div>
+                    </div>
+                  }
+                  @if(getVJTransactions(selectedVJ()!.id).length === 0) {
+                    <div class="vdw-no-txn">No transactions yet</div>
+                  }
+                </div>
+              }
+
+              @if(vjDetailTab() === 'account') {
+                <div class="vdp-info-list">
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Full Name</span><span class="vdp-info-val">{{ selectedVJ()!.name }}</span></div>
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Email</span><span class="vdp-info-val">{{ selectedVJ()!.email }}</span></div>
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Member Since</span><span class="vdp-info-val">{{ selectedVJ()!.joinDate }}</span></div>
+                  <div class="vdp-info-row"><span class="vdp-info-lbl">Status</span>
+                    <span class="status-pill" [class]="selectedVJ()!.status">{{ selectedVJ()!.status }}</span>
+                  </div>
+                </div>
+                <div class="vdp-acct-actions">
+                  <h4>Account Actions</h4>
+                  <div class="action-btns">
+                    <button class="act-btn-sm edit" (click)="activateVJ(selectedVJ()!)">Activate Account</button>
+                    <button class="act-btn-sm delete" (click)="suspendVJ(selectedVJ()!)">Suspend Account</button>
+                  </div>
+                </div>
+              }
+
+            </div>
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styleUrl: './admin-dashboard.component.css'
@@ -459,6 +631,15 @@ export class AdminDashboardComponent {
   uploadTab = signal<'movie' | 'series' | 'episode'>('movie');
   uploadLoading = signal(false);
   uploadSuccess = signal(false);
+
+  selectedVJ = signal<VJ | null>(null);
+  vjDetailTab = signal<'overview' | 'wallet' | 'account'>('overview');
+  showVJDetail = signal(false);
+  showAddModal = signal(false);
+  showDeductModal = signal(false);
+  adjustSuccess = signal(false);
+  vjAdjustAmount = 0;
+  vjAdjustNote = '';
 
   systemWallet = 12450.80;
   totalRevenue = 28640.50;
@@ -545,6 +726,50 @@ export class AdminDashboardComponent {
   approveWithdrawal(t: Transaction) { t.status = 'completed'; }
   rejectWithdrawal(t: Transaction) { t.status = 'failed'; }
   addHeroSlide() { }
+
+  openVJDetail(vj: VJ) {
+    this.selectedVJ.set(vj);
+    this.vjDetailTab.set('overview');
+    this.showAddModal.set(false);
+    this.showDeductModal.set(false);
+    this.adjustSuccess.set(false);
+    this.vjAdjustAmount = 0;
+    this.vjAdjustNote = '';
+    this.showVJDetail.set(true);
+  }
+
+  closeVJDetail() { this.showVJDetail.set(false); }
+
+  addFunds() {
+    const vj = this.selectedVJ();
+    if (vj && this.vjAdjustAmount > 0) {
+      vj.balance += this.vjAdjustAmount;
+      this.vjAdjustAmount = 0;
+      this.vjAdjustNote = '';
+      this.adjustSuccess.set(true);
+      setTimeout(() => this.adjustSuccess.set(false), 3000);
+    }
+  }
+
+  deductFunds() {
+    const vj = this.selectedVJ();
+    if (vj && this.vjAdjustAmount > 0 && this.vjAdjustAmount <= vj.balance) {
+      vj.balance -= this.vjAdjustAmount;
+      this.vjAdjustAmount = 0;
+      this.vjAdjustNote = '';
+      this.adjustSuccess.set(true);
+      setTimeout(() => this.adjustSuccess.set(false), 3000);
+    }
+  }
+
+  activateVJ(vj: VJ) { vj.status = 'active'; }
+  suspendVJ(vj: VJ) { vj.status = 'suspended'; }
+
+  getVJTransactions(vjId: number): Transaction[] {
+    const vj = this.vjs.find(v => v.id === vjId);
+    if (!vj) return [];
+    return this.transactions.filter(t => t.from === vj.name).slice(0, 6);
+  }
 
   adminSubmitUpload() {
     this.uploadLoading.set(true);

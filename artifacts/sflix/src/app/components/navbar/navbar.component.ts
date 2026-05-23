@@ -136,7 +136,7 @@ import { Router } from '@angular/router';
       box-shadow: 0 4px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(52,211,153,0.18);
     }
     .header-inner {
-      max-width: 1400px; margin: 0 auto; height: 64px;
+      max-width: 1400px; margin: 0 auto; height: 48px;
       display: flex; align-items: center; justify-content: space-between; gap: 24px;
     }
     .header-left { display: flex; align-items: center; gap: 40px; }

@@ -16,14 +16,10 @@ import { Movie } from '../../models/movie.model';
           loading="lazy"
           (error)="onImgError($event)"
         />
-        @if(movie.quality) {
-          <span class="quality-badge">{{ movie.quality }}</span>
-        }
         @if(movie.vjName) {
-          <span class="vj-badge">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-            {{ movie.vjName }}
-          </span>
+          <span class="quality-badge">{{ movie.vjName }}</span>
+        } @else if(movie.quality) {
+          <span class="quality-badge">{{ movie.quality }}</span>
         }
         <div class="card-hover">
           <button class="play-btn" (click)="$event.stopPropagation()">
@@ -84,26 +80,6 @@ import { Movie } from '../../models/movie.model';
       border-radius: 3px;
       letter-spacing: 0.5px;
       z-index: 2;
-    }
-    .vj-badge {
-      position: absolute;
-      bottom: 7px;
-      left: 0;
-      right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%);
-      color: rgba(255,255,255,0.85);
-      font-size: 9px;
-      font-weight: 600;
-      padding: 4px 6px;
-      z-index: 2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      letter-spacing: 0.3px;
     }
     .card-hover {
       position: absolute;

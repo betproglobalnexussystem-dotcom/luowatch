@@ -59,7 +59,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
           <div class="header-right">
             <div class="header-wallet">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              {{ '$' + (walletBalance | number:'1.2-2') }}
+              {{ 'UGX ' + (walletBalance | number:'1.2-2') }}
             </div>
           </div>
         </header>
@@ -108,7 +108,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                           <div class="mini-title">{{ t.description }}</div>
                           <div class="mini-meta">{{ t.date }}</div>
                         </div>
-                        <span class="tx-amount" [class]="t.type">{{ '$' + (t.amount | number:'1.2-2') }}</span>
+                        <span class="tx-amount" [class]="t.type">{{ 'UGX ' + (t.amount | number:'1.2-2') }}</span>
                       </div>
                     }
                   </div>
@@ -441,7 +441,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                   <div class="pwh-content">
                     <div class="pwh-left">
                       <div class="pwh-label">Available Balance</div>
-                      <div class="pwh-amount">{{ '$' + (walletBalance | number:'1.2-2') }}</div>
+                      <div class="pwh-amount">{{ 'UGX ' + (walletBalance | number:'1.2-2') }}</div>
                       <div class="pwh-downloads">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         {{ downloadsCount | number }} total downloads
@@ -461,7 +461,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                     <div class="pws-icon pws-green">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     </div>
-                    <div class="pws-val">{{ '$' + (totalEarned | number:'1.2-2') }}</div>
+                    <div class="pws-val">{{ 'UGX ' + (totalEarned | number:'1.2-2') }}</div>
                     <div class="pws-lbl">Total Earned</div>
                   </div>
                   <div class="pws-card">
@@ -505,7 +505,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
                             {{ m.dlCount | number }}
                           </div>
-                          <div class="pwm-earn">{{ '+' + '$' + (m.dlCount * 0.01 | number:'1.2-2') }}</div>
+                          <div class="pwm-earn">{{ '+' + 'UGX ' + (m.dlCount * 0.01 | number:'1.2-2') }}</div>
                         </div>
                       </div>
                     }
@@ -528,7 +528,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                         <td>{{ t.date }}</td>
                         <td class="fw">{{ t.description }}</td>
                         <td><span class="type-badge" [class]="t.type">{{ t.type }}</span></td>
-                        <td class="amount" [class]="t.type">{{ '$' + (t.amount | number:'1.2-2') }}</td>
+                        <td class="amount" [class]="t.type">{{ 'UGX ' + (t.amount | number:'1.2-2') }}</td>
                         <td><span class="status-pill" [class]="t.status">{{ t.status }}</span></td>
                       </tr>
                     }
@@ -561,7 +561,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
               <div class="mm-body">
                 <div class="mm-avail-bar">
                   <span class="mm-avail-lbl">Available Balance</span>
-                  <span class="mm-avail-val">{{ '$' + (walletBalance | number:'1.2-2') }}</span>
+                  <span class="mm-avail-val">{{ 'UGX ' + (walletBalance | number:'1.2-2') }}</span>
                 </div>
                 <div class="mm-section-lbl">Select Network</div>
                 <div class="mm-networks">
@@ -580,9 +580,9 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                   <input class="mm-input" type="tel" [(ngModel)]="mobileMoney.phone" placeholder="+254 7XX XXX XXX">
                 </div>
                 <div class="mm-field">
-                  <label class="mm-label">Amount (USD)</label>
+                  <label class="mm-label">Amount (UGX)</label>
                   <div class="mm-amount-wrap">
-                    <span class="mm-prefix">$</span>
+                    <span class="mm-prefix">UGX</span>
                     <input class="mm-input" type="number" [(ngModel)]="mobileMoney.amount" placeholder="0.00" min="1" [max]="walletBalance">
                   </div>
                   @if(isOverBalance()) {
@@ -601,7 +601,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                   <svg class="mm-check-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
                 <h3>Withdrawal Sent!</h3>
-                <p>{{ '$' + (lastWithdrawnAmount | number:'1.2-2') }} sent to {{ mobileMoney.phone }}</p>
+                <p>{{ 'UGX ' + (lastWithdrawnAmount | number:'1.2-2') }} sent to {{ mobileMoney.phone }}</p>
                 <p class="mm-via">via {{ getNetworkName(mobileMoney.network) }}</p>
                 <button class="mm-done-btn" (click)="closeWithdrawModal()">Done</button>
               </div>

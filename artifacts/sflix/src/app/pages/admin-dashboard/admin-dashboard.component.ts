@@ -62,7 +62,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
             </div>
             <div class="header-wallet">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              {{ '$' + (systemWallet | number:'1.2-2') }}
+              {{ 'UGX ' + (systemWallet | number:'1.2-2') }}
             </div>
           </div>
         </header>
@@ -247,7 +247,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                             {{ v.downloads | number }}
                           </div>
                         </td>
-                        <td><span class="vj-balance">{{ '$' + (v.balance | number:'1.2-2') }}</span></td>
+                        <td><span class="vj-balance">{{ 'UGX ' + (v.balance | number:'1.2-2') }}</span></td>
                         <td><span class="status-pill" [class]="v.status">{{ v.status }}</span></td>
                         <td>
                           <div class="action-btns">
@@ -359,8 +359,8 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
               <h2>System Wallet</h2>
               <div class="wallet-hero purple">
                 <div class="wallet-bal-label">System Balance</div>
-                <div class="wallet-bal">{{ '$' + (systemWallet | number:'1.2-2') }}</div>
-                <div class="wallet-bal-sub">Total platform revenue: {{ '$' + (totalRevenue | number:'1.2-2') }}</div>
+                <div class="wallet-bal">{{ 'UGX ' + (systemWallet | number:'1.2-2') }}</div>
+                <div class="wallet-bal-sub">Total platform revenue: {{ 'UGX ' + (totalRevenue | number:'1.2-2') }}</div>
               </div>
               <div class="wallet-breakdown">
                 @for(vj of vjs; track vj.id) {
@@ -371,7 +371,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                       <div class="wb-meta">{{ vj.totalMovies }} movies · {{ vj.totalViews | number }} views</div>
                     </div>
                     <div class="wb-balance">
-                      <span class="wb-amt">{{ '$' + (vj.balance | number:'1.2-2') }}</span>
+                      <span class="wb-amt">{{ 'UGX ' + (vj.balance | number:'1.2-2') }}</span>
                       <span class="wb-lbl">balance</span>
                     </div>
                   </div>
@@ -391,7 +391,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                       <tr>
                         <td>{{ t.date }}</td>
                         <td class="fw vj-name">{{ t.from }}</td>
-                        <td class="fw">{{ '$' + (t.amount | number:'1.2-2') }}</td>
+                        <td class="fw">{{ 'UGX ' + (t.amount | number:'1.2-2') }}</td>
                         <td><span class="status-pill" [class]="t.status">{{ t.status }}</span></td>
                         <td>
                           @if(t.status === 'pending') {
@@ -424,7 +424,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                         <td class="fw">{{ t.description }}</td>
                         <td>{{ t.from || 'System' }}</td>
                         <td><span class="type-badge" [class]="t.type">{{ t.type }}</span></td>
-                        <td class="fw">{{ '$' + (t.amount | number:'1.2-2') }}</td>
+                        <td class="fw">{{ 'UGX ' + (t.amount | number:'1.2-2') }}</td>
                         <td><span class="status-pill" [class]="t.status">{{ t.status }}</span></td>
                       </tr>
                     }
@@ -497,7 +497,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                     <div class="vds-lbl">Downloads</div>
                   </div>
                   <div class="vds-card green">
-                    <div class="vds-val">{{ '$' + (selectedVJ()!.balance | number:'1.2-2') }}</div>
+                    <div class="vds-val">{{ 'UGX ' + (selectedVJ()!.balance | number:'1.2-2') }}</div>
                     <div class="vds-lbl">Balance</div>
                   </div>
                 </div>
@@ -513,7 +513,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                 <div class="vdw-hero">
                   <div>
                     <div class="vdwh-lbl">Wallet Balance</div>
-                    <div class="vdwh-amt">{{ '$' + (selectedVJ()!.balance | number:'1.2-2') }}</div>
+                    <div class="vdwh-amt">{{ 'UGX ' + (selectedVJ()!.balance | number:'1.2-2') }}</div>
                   </div>
                   <div class="vdwh-sub">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
@@ -589,7 +589,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                         <div class="vdw-txn-desc">{{ t.description }}</div>
                         <div class="vdw-txn-date">{{ t.date }}</div>
                       </div>
-                      <div class="vdw-txn-amt" [class]="t.type">{{ '$' + (t.amount | number:'1.2-2') }}</div>
+                      <div class="vdw-txn-amt" [class]="t.type">{{ 'UGX ' + (t.amount | number:'1.2-2') }}</div>
                     </div>
                   }
                   @if(getVJTransactions(selectedVJ()!.id).length === 0) {

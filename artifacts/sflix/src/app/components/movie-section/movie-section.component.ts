@@ -40,13 +40,13 @@ import { MovieCardComponent } from '../movie-card/movie-card.component';
   `,
   styles: [`
     .section {
-      padding: 0 0 28px;
+      padding: 0 0 10px;
     }
     .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px 16px;
+      padding: 0 32px 10px;
       max-width: 1400px;
       margin: 0 auto;
     }

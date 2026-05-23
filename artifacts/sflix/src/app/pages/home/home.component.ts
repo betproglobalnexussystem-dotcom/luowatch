@@ -25,7 +25,7 @@ import { MovieService } from '../../services/movie.service';
       min-height: 100vh;
     }
     .sections {
-      padding: 32px 0 0;
+      padding: 16px 0 0;
     }
   `]
 })

@@ -57,7 +57,7 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
     .movies-page {
       background: #1a1c24;
       min-height: 100vh;
-      padding-top: 64px;
+      padding-top: 48px;
     }
     .page-header {
       position: relative;

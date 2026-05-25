@@ -1,5 +1,5 @@
 export interface Movie {
-  id: number;
+  id: string | number;
   title: string;
   year: number;
   rating: number;
@@ -12,8 +12,11 @@ export interface Movie {
   quality?: string;
   type: 'movie' | 'tv';
   vjName?: string;
+  vjId?: string;
   views?: number;
   videoUrl?: string;
+  featured?: boolean;
+  createdAt?: number;
 }
 
 export interface MovieSection {
@@ -23,7 +26,7 @@ export interface MovieSection {
 }
 
 export interface Series {
-  id: number;
+  id: string | number;
   title: string;
   year: number;
   genres: string[];
@@ -31,12 +34,14 @@ export interface Series {
   poster: string;
   backdrop: string;
   vjName: string;
+  vjId?: string;
   episodes: Episode[];
+  createdAt?: number;
 }
 
 export interface Episode {
-  id: number;
-  seriesId: number;
+  id: string | number;
+  seriesId: string | number;
   title: string;
   episode: number;
   season: number;
@@ -46,9 +51,10 @@ export interface Episode {
 }
 
 export interface VJ {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
+  uid?: string;
   joinDate: string;
   totalMovies: number;
   totalViews: number;
@@ -58,28 +64,31 @@ export interface VJ {
 }
 
 export interface User {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
   joinDate: string;
   lastSeen: string;
   watchCount: number;
   status: 'active' | 'banned';
+  plan?: string;
+  role?: string;
 }
 
 export interface Transaction {
-  id: number;
+  id: string | number;
   date: string;
   type: 'earning' | 'withdrawal' | 'system';
   amount: number;
   description: string;
   status: 'completed' | 'pending' | 'failed';
   from?: string;
+  vjId?: string;
 }
 
 export interface Activity {
-  id: number;
-  userId: number;
+  id: string | number;
+  userId: string | number;
   userName: string;
   action: string;
   target: string;
@@ -87,10 +96,19 @@ export interface Activity {
 }
 
 export interface HeroSlide {
-  id: number;
-  movieId: number;
+  id: string | number;
+  movieId: string | number;
   title: string;
   imageUrl: string;
   active: boolean;
   uploadedBy: string;
+  createdAt?: number;
+}
+
+export interface AppComment {
+  id: string | number;
+  uid: string;
+  name: string;
+  text: string;
+  createdAt: number;
 }

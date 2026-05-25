@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -625,7 +625,7 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
   `,
   styleUrl: './admin-dashboard.component.css'
 })
-export class AdminDashboardComponent {
+export class AdminDashboardComponent implements OnInit {
   activeSection = signal<AdminSection>('overview');
   sidebarOpen = signal(false);
   uploadTab = signal<'movie' | 'series' | 'episode'>('movie');
@@ -685,14 +685,33 @@ export class AdminDashboardComponent {
     { id: 'activities', label: 'All Activities', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' },
   ];
 
-  constructor(private movieService: MovieService) {
-    this.allMovies = this.movieService.getAllMovies();
-    this.allSeries = this.movieService.getSeries();
-    this.users = this.movieService.getUsers();
-    this.vjs = this.movieService.getVJs();
-    this.transactions = this.movieService.getTransactions();
-    this.activities = this.movieService.getActivities();
-    this.heroSlides = this.movieService.getHeroSlides();
+  loading = false;
+
+  constructor(private movieService: MovieService) {}
+
+  ngOnInit() {
+    this.loadAllData();
+  }
+
+  async loadAllData() {
+    this.loading = true;
+    const [movies, series, users, vjs, transactions, activities, heroSlides] = await Promise.all([
+      this.movieService.getAllMovies(),
+      this.movieService.getSeries(),
+      this.movieService.getUsers(),
+      this.movieService.getVJs(),
+      this.movieService.getTransactions(),
+      this.movieService.getActivities(),
+      this.movieService.getHeroSlides(),
+    ]);
+    this.allMovies = movies;
+    this.allSeries = series;
+    this.users = users;
+    this.vjs = vjs;
+    this.transactions = transactions;
+    this.activities = activities;
+    this.heroSlides = heroSlides;
+    this.loading = false;
   }
 
   get filteredMovies() {
@@ -718,14 +737,42 @@ export class AdminDashboardComponent {
   navigate(section: AdminSection) { this.activeSection.set(section); this.sidebarOpen.set(false); this.uploadSuccess.set(false); }
   currentNavLabel() { return this.navItems.find(n => n.id === this.activeSection())?.label || 'Dashboard'; }
 
-  deleteMovie(id: number) { this.allMovies = this.allMovies.filter(m => m.id !== id); }
-  toggleUserStatus(u: User) { u.status = u.status === 'active' ? 'banned' : 'active'; }
-  toggleVJStatus(v: VJ) { v.status = v.status === 'active' ? 'suspended' : 'active'; }
-  toggleSlide(s: HeroSlide) { s.active = !s.active; }
-  deleteSlide(id: number) { this.heroSlides = this.heroSlides.filter(s => s.id !== id); }
-  approveWithdrawal(t: Transaction) { t.status = 'completed'; }
-  rejectWithdrawal(t: Transaction) { t.status = 'failed'; }
-  addHeroSlide() { }
+  deleteMovie(id: string | number) {
+    this.allMovies = this.allMovies.filter(m => m.id !== id);
+    this.movieService.deleteMovie(id);
+  }
+  toggleUserStatus(u: User) {
+    u.status = u.status === 'active' ? 'banned' : 'active';
+    this.movieService.updateUser(String(u.id), { status: u.status });
+  }
+  toggleVJStatus(v: VJ) {
+    v.status = v.status === 'active' ? 'suspended' : 'active';
+    this.movieService.updateVJ(v.id, { status: v.status });
+  }
+  toggleSlide(s: HeroSlide) {
+    s.active = !s.active;
+    this.movieService.updateHeroSlide(s.id, { active: s.active });
+  }
+  deleteSlide(id: string | number) {
+    this.heroSlides = this.heroSlides.filter(s => s.id !== id);
+    this.movieService.deleteHeroSlide(id);
+  }
+  approveWithdrawal(t: Transaction) {
+    t.status = 'completed';
+    this.movieService.updateTransaction(t.id, { status: 'completed' });
+  }
+  rejectWithdrawal(t: Transaction) {
+    t.status = 'failed';
+    this.movieService.updateTransaction(t.id, { status: 'failed' });
+  }
+  addHeroSlide() {
+    if (!this.heroForm.movieId || !this.heroForm.imageUrl) return;
+    const slide = { movieId: this.heroForm.movieId, imageUrl: this.heroForm.imageUrl, title: '', active: true, uploadedBy: 'admin' };
+    this.movieService.addHeroSlide(slide).then(id => {
+      this.heroSlides = [...this.heroSlides, { id, ...slide }];
+      this.heroForm = { movieId: '', imageUrl: '' };
+    });
+  }
 
   openVJDetail(vj: VJ) {
     this.selectedVJ.set(vj);
@@ -744,6 +791,8 @@ export class AdminDashboardComponent {
     const vj = this.selectedVJ();
     if (vj && this.vjAdjustAmount > 0) {
       vj.balance += this.vjAdjustAmount;
+      this.movieService.updateVJ(vj.id, { balance: vj.balance });
+      this.movieService.addTransaction({ vjId: String(vj.id), type: 'earning', amount: this.vjAdjustAmount, description: this.vjAdjustNote || 'Admin: funds added', status: 'completed', from: 'Admin' });
       this.vjAdjustAmount = 0;
       this.vjAdjustNote = '';
       this.adjustSuccess.set(true);
@@ -755,6 +804,8 @@ export class AdminDashboardComponent {
     const vj = this.selectedVJ();
     if (vj && this.vjAdjustAmount > 0 && this.vjAdjustAmount <= vj.balance) {
       vj.balance -= this.vjAdjustAmount;
+      this.movieService.updateVJ(vj.id, { balance: vj.balance });
+      this.movieService.addTransaction({ vjId: String(vj.id), type: 'withdrawal', amount: this.vjAdjustAmount, description: this.vjAdjustNote || 'Admin: funds deducted', status: 'completed', from: 'Admin' });
       this.vjAdjustAmount = 0;
       this.vjAdjustNote = '';
       this.adjustSuccess.set(true);
@@ -762,18 +813,43 @@ export class AdminDashboardComponent {
     }
   }
 
-  activateVJ(vj: VJ) { vj.status = 'active'; }
-  suspendVJ(vj: VJ) { vj.status = 'suspended'; }
-
-  getVJTransactions(vjId: number): Transaction[] {
-    const vj = this.vjs.find(v => v.id === vjId);
-    if (!vj) return [];
-    return this.transactions.filter(t => t.from === vj.name).slice(0, 6);
+  activateVJ(vj: VJ) {
+    vj.status = 'active';
+    this.movieService.updateVJ(vj.id, { status: 'active' });
+  }
+  suspendVJ(vj: VJ) {
+    vj.status = 'suspended';
+    this.movieService.updateVJ(vj.id, { status: 'suspended' });
   }
 
-  adminSubmitUpload() {
+  getVJTransactions(vjId: string | number): Transaction[] {
+    return this.transactions.filter(t => t.vjId === String(vjId)).slice(0, 6);
+  }
+
+  async adminSubmitUpload() {
+    if (!this.adminUpload.title) return;
     this.uploadLoading.set(true);
-    setTimeout(() => { this.uploadLoading.set(false); this.uploadSuccess.set(true); }, 1200);
+    const genres = this.adminUpload.genre ? [this.adminUpload.genre] : [];
+    await this.movieService.addMovie({
+      title: this.adminUpload.title,
+      year: this.adminUpload.year,
+      quality: this.adminUpload.quality,
+      genres,
+      duration: this.adminUpload.duration,
+      language: this.adminUpload.language,
+      type: this.adminUpload.type as 'movie' | 'tv',
+      description: this.adminUpload.description,
+      poster: this.adminUpload.posterUrl,
+      backdrop: this.adminUpload.posterUrl,
+      vjId: this.adminUpload.vjId,
+      rating: 0,
+      views: 0,
+      featured: false,
+    });
+    await this.movieService.addActivity({ userName: 'Admin', action: 'uploaded movie', target: this.adminUpload.title });
+    this.uploadLoading.set(false);
+    this.uploadSuccess.set(true);
+    this.loadAllData();
   }
 
   onImgError(event: Event) { (event.target as HTMLImageElement).style.display = 'none'; }

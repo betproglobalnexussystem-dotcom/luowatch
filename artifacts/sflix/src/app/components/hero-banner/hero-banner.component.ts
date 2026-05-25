@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Movie } from '../../models/movie.model';
@@ -16,6 +16,12 @@ import { MovieService } from '../../services/movie.service';
           [class.active]="i === currentIndex()"
           [style.background-image]="'url(' + movie.backdrop + ')'"
         ></div>
+      }
+
+      @if(featured().length === 0) {
+        <div class="hero-placeholder">
+          <div class="hero-placeholder-text">LUO WATCH</div>
+        </div>
       }
 
       <div class="hero-dots">
@@ -57,6 +63,23 @@ import { MovieService } from '../../services/movie.service';
       &.active {
         opacity: 1;
       }
+    }
+    .hero-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1c24, #0e1018);
+    }
+    .hero-placeholder-text {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      background: linear-gradient(135deg, #FF271C, #F5852F);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .hero-dots {
       position: absolute;
@@ -114,8 +137,10 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
   constructor(private movieService: MovieService) {}
 
   ngOnInit() {
-    this.featured.set(this.movieService.getFeatured());
-    this.startTimer();
+    this.movieService.getFeatured().then(movies => {
+      this.featured.set(movies);
+      if (movies.length > 0) this.startTimer();
+    });
   }
 
   ngOnDestroy() { this.stopTimer(); }
@@ -124,13 +149,17 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
   stopTimer() { if (this.timer) clearInterval(this.timer); }
 
   next() {
+    const len = this.featured().length;
+    if (len === 0) return;
     this.prevIndex.set(this.currentIndex());
-    this.currentIndex.update(i => (i + 1) % this.featured().length);
+    this.currentIndex.update(i => (i + 1) % len);
   }
 
   prev() {
+    const len = this.featured().length;
+    if (len === 0) return;
     this.prevIndex.set(this.currentIndex());
-    this.currentIndex.update(i => (i - 1 + this.featured().length) % this.featured().length);
+    this.currentIndex.update(i => (i - 1 + len) % len);
   }
 
   goTo(index: number) {

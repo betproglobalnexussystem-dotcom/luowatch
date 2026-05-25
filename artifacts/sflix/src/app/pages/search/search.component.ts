@@ -15,12 +15,16 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
         <div class="header-content">
           <h1>Search Results</h1>
           @if(query()) {
-            <p>Showing results for "<strong>{{ query() }}</strong>" — {{ results().length }} found</p>
+            <p>Showing results for "<strong>{{ query() }}</strong>"
+              @if(!loading()) { — {{ results().length }} found }
+            </p>
           }
         </div>
       </div>
       <div class="search-body">
-        @if(results().length > 0) {
+        @if(loading()) {
+          <div class="loading-state"><div class="spinner"></div></div>
+        } @else if(results().length > 0) {
           <div class="results-grid">
             @for(movie of results(); track movie.id) {
               <app-movie-card [movie]="movie"></app-movie-card>
@@ -63,6 +67,20 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 16px;
     }
+    .loading-state {
+      display: flex;
+      justify-content: center;
+      padding: 80px 0;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #FF271C;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .no-results {
       display: flex;
       flex-direction: column;
@@ -86,6 +104,7 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
 export class SearchComponent implements OnInit {
   query = signal('');
   results = signal<Movie[]>([]);
+  loading = signal(false);
 
   constructor(
     private route: ActivatedRoute,
@@ -97,13 +116,14 @@ export class SearchComponent implements OnInit {
       const q = params['q'] || '';
       this.query.set(q);
       if (q) {
-        const all = this.movieService.getSections().flatMap(s => s.movies)
-          .filter((m, i, arr) => arr.findIndex(x => x.id === m.id) === i);
-        const lower = q.toLowerCase();
-        this.results.set(all.filter(m =>
-          m.title.toLowerCase().includes(lower) ||
-          m.genres.some(g => g.toLowerCase().includes(lower))
-        ));
+        this.loading.set(true);
+        this.movieService.search(q).then(results => {
+          this.results.set(results);
+          this.loading.set(false);
+        }).catch(() => {
+          this.results.set([]);
+          this.loading.set(false);
+        });
       } else {
         this.results.set([]);
       }

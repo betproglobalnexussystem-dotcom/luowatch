@@ -183,36 +183,70 @@ interface Plan {
           <h2 class="lm-title">Welcome back</h2>
           <p class="lm-sub">Sign in to continue watching</p>
           @if(!loginSuccess()) {
-            <form class="lm-form" (ngSubmit)="doLogin()">
-              <div class="lm-field">
-                <label>EMAIL</label>
-                <input type="email" [(ngModel)]="loginEmail" name="email" placeholder="you@example.com" autocomplete="email" required>
-              </div>
-              <div class="lm-field">
-                <label>PASSWORD</label>
-                <div class="lm-pw-wrap">
-                  <input [type]="showPw() ? 'text' : 'password'" [(ngModel)]="loginPassword" name="password" placeholder="••••••••" autocomplete="current-password" required>
-                  <button type="button" class="lm-eye" (click)="showPw.set(!showPw())">
-                    @if(showPw()) {
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                    } @else {
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    }
-                  </button>
+            @if(!showRegister()) {
+              <form class="lm-form" (ngSubmit)="doLogin()">
+                <div class="lm-field">
+                  <label>EMAIL</label>
+                  <input type="email" [(ngModel)]="loginEmail" name="email" placeholder="you@example.com" autocomplete="email" required>
                 </div>
-              </div>
-              @if(loginError()) {
-                <div class="lm-error">{{ loginError() }}</div>
-              }
-              <div class="lm-row">
-                <label class="lm-check"><input type="checkbox" [(ngModel)]="rememberMe" name="remember"><span>Remember me</span></label>
-                <a href="#" class="lm-forgot" (click)="$event.preventDefault()">Forgot password?</a>
-              </div>
-              <button type="submit" class="lm-submit" [class.loading]="loginLoading()">
-                {{ loginLoading() ? 'Signing in...' : 'SIGN IN' }}
+                <div class="lm-field">
+                  <label>PASSWORD</label>
+                  <div class="lm-pw-wrap">
+                    <input [type]="showPw() ? 'text' : 'password'" [(ngModel)]="loginPassword" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                    <button type="button" class="lm-eye" (click)="showPw.set(!showPw())">
+                      @if(showPw()) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      } @else {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      }
+                    </button>
+                  </div>
+                </div>
+                @if(loginError()) {
+                  <div class="lm-error">{{ loginError() }}</div>
+                }
+                <div class="lm-row">
+                  <label class="lm-check"><input type="checkbox" [(ngModel)]="rememberMe" name="remember"><span>Remember me</span></label>
+                  <a href="#" class="lm-forgot" (click)="$event.preventDefault()">Forgot password?</a>
+                </div>
+                <button type="submit" class="lm-submit" [class.loading]="loginLoading()">
+                  {{ loginLoading() ? 'Signing in...' : 'SIGN IN' }}
+                </button>
+              </form>
+              <div class="lm-divider"><span>or</span></div>
+              <button class="lm-google-btn" (click)="loginWithGoogle()" [disabled]="loginLoading()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Continue with Google
               </button>
-            </form>
-            <p class="lm-register">Don't have an account? <a href="#" (click)="$event.preventDefault()">Register</a></p>
+              <p class="lm-register">Don't have an account? <a href="#" (click)="$event.preventDefault(); showRegister.set(true)">Register</a></p>
+            } @else {
+              <form class="lm-form" (ngSubmit)="doRegister()">
+                <div class="lm-field">
+                  <label>FULL NAME</label>
+                  <input type="text" [(ngModel)]="registerName" name="rname" placeholder="Your full name" required>
+                </div>
+                <div class="lm-field">
+                  <label>EMAIL</label>
+                  <input type="email" [(ngModel)]="registerEmail" name="remail" placeholder="you@example.com" autocomplete="email" required>
+                </div>
+                <div class="lm-field">
+                  <label>PASSWORD</label>
+                  <input type="password" [(ngModel)]="registerPassword" name="rpw" placeholder="Min 6 characters" required>
+                </div>
+                @if(loginError()) {
+                  <div class="lm-error">{{ loginError() }}</div>
+                }
+                <button type="submit" class="lm-submit" [class.loading]="loginLoading()">
+                  {{ loginLoading() ? 'Creating account...' : 'CREATE ACCOUNT' }}
+                </button>
+              </form>
+              <div class="lm-divider"><span>or</span></div>
+              <button class="lm-google-btn" (click)="loginWithGoogle()" [disabled]="loginLoading()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign up with Google
+              </button>
+              <p class="lm-register">Already have an account? <a href="#" (click)="$event.preventDefault(); showRegister.set(false)">Sign In</a></p>
+            }
           } @else {
             <div class="lm-success">
               <div class="lm-success-icon">
@@ -585,6 +619,20 @@ interface Plan {
       &:hover { opacity: 0.9; transform: translateY(-1px); }
       &.loading { opacity: 0.7; cursor: wait; }
     }
+    .lm-divider {
+      display: flex; align-items: center; gap: 10px; margin: 12px 0 4px;
+      &::before, &::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+      span { color: rgba(255,255,255,0.3); font-size: 11px; }
+    }
+    .lm-google-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 11px 16px; border-radius: 9px; margin-bottom: 12px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+      &:hover:not(:disabled) { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    }
     .lm-register {
       text-align: center; color: rgba(255,255,255,0.45); font-size: 12px; margin: 14px 0 0;
       a { color: rgba(52,211,153,0.8); text-decoration: none; &:hover { color: #10b981; } }
@@ -743,6 +791,7 @@ export class NavbarComponent {
   showCats = signal(false);
   showUserMenu = signal(false);
   showPw = signal(false);
+  showRegister = signal(false);
   loginLoading = signal(false);
   loginSuccess = signal(false);
   loginError = signal('');
@@ -753,6 +802,9 @@ export class NavbarComponent {
   loginEmail = '';
   loginPassword = '';
   rememberMe = false;
+  registerName = '';
+  registerEmail = '';
+  registerPassword = '';
   payNetwork = '';
   payPhone = '';
 
@@ -794,22 +846,80 @@ export class NavbarComponent {
     this.loginError.set('');
     this.loginEmail = '';
     this.loginPassword = '';
+    this.registerName = '';
+    this.registerEmail = '';
+    this.registerPassword = '';
     this.showPw.set(false);
+    this.showRegister.set(false);
   }
 
-  doLogin() {
+  async doLogin() {
     if (!this.loginEmail || !this.loginPassword) {
       this.loginError.set('Please enter your email and password.');
       return;
     }
     this.loginError.set('');
     this.loginLoading.set(true);
-    setTimeout(() => {
-      this.loginLoading.set(false);
-      this.authService.login(this.loginEmail);
+    try {
+      await this.authService.loginWithEmail(this.loginEmail, this.loginPassword);
       this.loginSuccess.set(true);
       setTimeout(() => this.closeLogin(), 1600);
-    }, 1200);
+    } catch (err: unknown) {
+      const msg = (err as { code?: string })?.code;
+      if (msg === 'auth/invalid-credential' || msg === 'auth/user-not-found' || msg === 'auth/wrong-password') {
+        this.loginError.set('Invalid email or password.');
+      } else if (msg === 'auth/too-many-requests') {
+        this.loginError.set('Too many attempts. Try again later.');
+      } else {
+        this.loginError.set('Sign in failed. Please try again.');
+      }
+    } finally {
+      this.loginLoading.set(false);
+    }
+  }
+
+  async loginWithGoogle() {
+    this.loginError.set('');
+    this.loginLoading.set(true);
+    try {
+      await this.authService.loginWithGoogle();
+      this.loginSuccess.set(true);
+      setTimeout(() => this.closeLogin(), 1600);
+    } catch (err: unknown) {
+      const msg = (err as { code?: string })?.code;
+      if (msg !== 'auth/popup-closed-by-user') {
+        this.loginError.set('Google sign-in failed. Please try again.');
+      }
+    } finally {
+      this.loginLoading.set(false);
+    }
+  }
+
+  async doRegister() {
+    if (!this.registerName || !this.registerEmail || !this.registerPassword) {
+      this.loginError.set('Please fill in all fields.');
+      return;
+    }
+    if (this.registerPassword.length < 6) {
+      this.loginError.set('Password must be at least 6 characters.');
+      return;
+    }
+    this.loginError.set('');
+    this.loginLoading.set(true);
+    try {
+      await this.authService.register(this.registerEmail, this.registerPassword, this.registerName);
+      this.loginSuccess.set(true);
+      setTimeout(() => this.closeLogin(), 1600);
+    } catch (err: unknown) {
+      const msg = (err as { code?: string })?.code;
+      if (msg === 'auth/email-already-in-use') {
+        this.loginError.set('Email already in use. Try signing in.');
+      } else {
+        this.loginError.set('Registration failed. Please try again.');
+      }
+    } finally {
+      this.loginLoading.set(false);
+    }
   }
 
   closeSubscribeModal() {

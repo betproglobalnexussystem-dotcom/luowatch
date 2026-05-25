@@ -26,11 +26,18 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
             >{{ genre }}</button>
           }
         </div>
-        <div class="shows-grid">
-          @for(show of shows(); track show.id) {
-            <app-movie-card [movie]="show"></app-movie-card>
-          }
-        </div>
+        @if(loading()) {
+          <div class="loading-state"><div class="spinner"></div></div>
+        } @else {
+          <div class="shows-grid">
+            @for(show of shows(); track show.id) {
+              <app-movie-card [movie]="show"></app-movie-card>
+            }
+            @if(shows().length === 0) {
+              <div class="empty-msg">No TV shows found.</div>
+            }
+          </div>
+        }
       </div>
     </div>
   `,
@@ -83,6 +90,27 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 16px;
     }
+    .loading-state {
+      display: flex;
+      justify-content: center;
+      padding: 80px 0;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #FF271C;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-msg {
+      color: rgba(255,255,255,0.4);
+      font-size: 14px;
+      padding: 40px 0;
+      grid-column: 1/-1;
+      text-align: center;
+    }
     @media (max-width: 768px) {
       .page-body, .page-header { padding: 20px 16px; }
     }
@@ -91,21 +119,21 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
 export class TvShowsComponent implements OnInit {
   activeGenre = signal('All');
   allShows = signal<Movie[]>([]);
+  loading = signal(true);
   genres = ['All', 'Drama', 'Action', 'Comedy', 'Sci-Fi', 'Fantasy', 'Thriller'];
 
   constructor(private movieService: MovieService) {}
 
   ngOnInit() {
-    const all = this.movieService.getSections()
-      .filter(s => s.slug === 'tv-shows' || s.slug === 'drama')
-      .flatMap(s => s.movies)
-      .filter((m, i, arr) => arr.findIndex(x => x.id === m.id) === i);
-    this.allShows.set(all);
+    this.movieService.getTvShows().then(shows => {
+      this.allShows.set(shows);
+      this.loading.set(false);
+    }).catch(() => this.loading.set(false));
   }
 
   shows() {
     const genre = this.activeGenre();
     if (genre === 'All') return this.allShows();
-    return this.allShows().filter(m => m.genres.some(g => g === genre));
+    return this.allShows().filter(m => m.genres?.some(g => g === genre));
   }
 }

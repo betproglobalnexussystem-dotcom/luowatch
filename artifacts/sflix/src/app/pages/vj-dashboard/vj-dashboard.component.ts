@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MovieService } from '../../services/movie.service';
+import { AuthService } from '../../services/auth.service';
 import { Movie, Series, Transaction, Activity, HeroSlide } from '../../models/movie.model';
 
 type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-series' | 'add-episode' | 'users' | 'hero-slides' | 'activities' | 'wallet' | 'transactions';
@@ -613,7 +614,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
   `,
   styleUrl: './vj-dashboard.component.css'
 })
-export class VjDashboardComponent {
+export class VjDashboardComponent implements OnInit {
   activeSection = signal<VJSection>('overview');
   sidebarOpen = signal(false);
   uploadLoading = signal(false);
@@ -627,6 +628,7 @@ export class VjDashboardComponent {
   withdrawStep = signal<'form' | 'success'>('form');
 
   vjName = 'CineVault';
+  vjId: string | null = null;
   walletBalance = 1240.50;
   totalEarned = 1740.50;
   downloadsCount = 1247;
@@ -677,15 +679,46 @@ export class VjDashboardComponent {
     { id: 'transactions', label: 'Transactions', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' },
   ];
 
-  constructor(private movieService: MovieService) {
-    this.myMovies = this.movieService.getAllMovies().filter(m => m.vjName === this.vjName);
-    this.mySeries = this.movieService.getSeries().filter(s => s.vjName === this.vjName);
-    this.users = this.movieService.getUsers();
-    this.myTransactions = this.movieService.getTransactions().filter(t => t.from === this.vjName);
-    this.activities = this.movieService.getActivities();
-    this.heroSlides = this.movieService.getHeroSlides();
+  constructor(private movieService: MovieService, private authService: AuthService) {}
+
+  ngOnInit() {
+    this.loadData();
+  }
+
+  async loadData() {
+    const user = this.authService.currentUser();
+    if (user) {
+      this.vjName = user.name;
+      this.vjId = user.uid;
+    }
+    const wallet = await this.movieService.getVJWallet(this.vjId || 'unknown');
+    this.walletBalance = wallet.balance;
+    this.totalEarned = wallet.totalEarned;
+    this.downloadsCount = wallet.downloads;
+
+    const [allMovies, allSeries, users, allTransactions, activities, heroSlides] = await Promise.all([
+      this.movieService.getAllMovies(),
+      this.movieService.getSeries(),
+      this.movieService.getUsers(),
+      this.movieService.getTransactions(),
+      this.movieService.getActivities(),
+      this.movieService.getHeroSlides(),
+    ]);
+
+    this.myMovies = this.vjId
+      ? allMovies.filter(m => m.vjId === this.vjId)
+      : allMovies;
+    this.mySeries = this.vjId
+      ? allSeries.filter(s => s.vjId === this.vjId)
+      : allSeries;
+    this.users = users;
+    this.myTransactions = this.vjId
+      ? allTransactions.filter(t => t.vjId === this.vjId)
+      : allTransactions;
+    this.activities = activities;
+    this.heroSlides = heroSlides;
     const dlCounts = [312, 248, 187, 156, 143, 98, 72, 31];
-    this.downloadedMovies = this.movieService.getAllMovies().slice(0, 8).map((m, i) => ({
+    this.downloadedMovies = this.myMovies.slice(0, 8).map((m, i) => ({
       ...m, dlCount: dlCounts[i] ?? Math.floor(Math.random() * 200 + 20)
     }));
   }
@@ -708,18 +741,80 @@ export class VjDashboardComponent {
 
   resetForm() { this.uploadForm = { title: '', year: 2024, quality: '', genre: '', duration: '', language: 'English', type: 'movie', description: '', posterUrl: '', backdropUrl: '' }; }
 
-  submitMovie() {
+  async submitMovie() {
+    if (!this.uploadForm.title) return;
     this.uploadLoading.set(true);
-    setTimeout(() => { this.uploadLoading.set(false); this.uploadSuccess.set(true); this.resetForm(); }, 1500);
+    const genres = this.uploadForm.genre ? [this.uploadForm.genre] : [];
+    await this.movieService.addMovie({
+      title: this.uploadForm.title,
+      year: this.uploadForm.year,
+      quality: this.uploadForm.quality,
+      genres,
+      duration: this.uploadForm.duration,
+      language: this.uploadForm.language,
+      type: this.uploadForm.type as 'movie' | 'tv',
+      description: this.uploadForm.description,
+      poster: this.uploadForm.posterUrl,
+      backdrop: this.uploadForm.backdropUrl || this.uploadForm.posterUrl,
+      vjId: this.vjId || '',
+      vjName: this.vjName,
+      rating: 0,
+      views: 0,
+      featured: false,
+    });
+    await this.movieService.addActivity({ userName: this.vjName, action: 'uploaded movie', target: this.uploadForm.title });
+    this.uploadLoading.set(false);
+    this.uploadSuccess.set(true);
+    this.resetForm();
+    this.loadData();
   }
 
-  submitSeries() { this.seriesSuccess.set(true); }
-  submitEpisode() { this.episodeSuccess.set(true); }
-  submitHeroSlide() { this.heroSuccess.set(true); }
+  async submitSeries() {
+    if (!this.seriesForm?.title) { this.seriesSuccess.set(true); return; }
+    await this.movieService.addSeries({
+      title: this.seriesForm.title,
+      year: this.seriesForm.year,
+      genres: this.seriesForm.genres ? [this.seriesForm.genres] : [],
+      vjId: this.vjId || '',
+      vjName: this.vjName,
+      poster: this.seriesForm.posterUrl || '',
+      description: this.seriesForm.description || '',
+      episodes: [],
+    });
+    this.seriesSuccess.set(true);
+    this.loadData();
+  }
+
+  async submitEpisode() {
+    if (!this.episodeForm?.seriesId || !this.episodeForm?.title) { this.episodeSuccess.set(true); return; }
+    await this.movieService.addEpisode(this.episodeForm.seriesId, {
+      title: this.episodeForm.title,
+      episode: this.episodeForm.episode,
+      season: this.episodeForm.season,
+      duration: this.episodeForm.duration || '',
+      quality: this.episodeForm.quality || '',
+    });
+    this.episodeSuccess.set(true);
+  }
+
+  async submitHeroSlide() {
+    if (!this.heroForm?.movieId || !this.heroForm?.imageUrl) { this.heroSuccess.set(true); return; }
+    await this.movieService.addHeroSlide({
+      movieId: this.heroForm.movieId,
+      imageUrl: this.heroForm.imageUrl,
+      title: '',
+      active: false,
+      uploadedBy: this.vjId || 'vj',
+    });
+    await this.movieService.addActivity({ userName: this.vjName, action: 'submitted hero slide', target: this.heroForm.movieId });
+    this.heroSuccess.set(true);
+  }
 
   requestWithdraw() {
     if (this.withdrawForm.amount > 0 && this.withdrawForm.amount <= this.walletBalance) {
-      this.walletBalance -= this.withdrawForm.amount;
+      const amount = this.withdrawForm.amount;
+      this.walletBalance -= amount;
+      this.movieService.addTransaction({ vjId: this.vjId || '', type: 'withdrawal', amount, description: 'Withdrawal request', status: 'pending', from: this.vjName });
       this.withdrawSuccess.set(true);
       this.withdrawForm = { amount: 0, method: '', account: '' };
     }
@@ -736,7 +831,9 @@ export class VjDashboardComponent {
   submitMobileMoney() {
     if (this.mobileMoney.network && this.mobileMoney.phone && this.mobileMoney.amount > 0 && this.mobileMoney.amount <= this.walletBalance) {
       this.lastWithdrawnAmount = this.mobileMoney.amount;
-      this.walletBalance -= this.mobileMoney.amount;
+      const amount = this.mobileMoney.amount;
+      this.walletBalance -= amount;
+      this.movieService.addTransaction({ vjId: this.vjId || '', type: 'withdrawal', amount, description: `Mobile Money - ${this.mobileMoney.network} ${this.mobileMoney.phone}`, status: 'pending', from: this.vjName });
       this.withdrawStep.set('success');
     }
   }

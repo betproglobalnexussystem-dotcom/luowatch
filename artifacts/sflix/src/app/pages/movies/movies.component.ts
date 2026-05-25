@@ -45,11 +45,18 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
           </div>
         </div>
 
-        <div class="movies-grid">
-          @for(movie of filteredMovies(); track movie.id) {
-            <app-movie-card [movie]="movie"></app-movie-card>
-          }
-        </div>
+        @if(loading()) {
+          <div class="loading-state"><div class="spinner"></div></div>
+        } @else {
+          <div class="movies-grid">
+            @for(movie of filteredMovies(); track movie.id) {
+              <app-movie-card [movie]="movie"></app-movie-card>
+            }
+            @if(filteredMovies().length === 0) {
+              <div class="empty-msg">No movies found.</div>
+            }
+          </div>
+        }
       </div>
     </div>
   `,
@@ -121,6 +128,27 @@ import { MovieCardComponent } from '../../components/movie-card/movie-card.compo
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 16px;
     }
+    .loading-state {
+      display: flex;
+      justify-content: center;
+      padding: 80px 0;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #FF271C;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-msg {
+      color: rgba(255,255,255,0.4);
+      font-size: 14px;
+      padding: 40px 0;
+      grid-column: 1/-1;
+      text-align: center;
+    }
     @media (max-width: 768px) {
       .page-body { padding: 20px 16px; }
       .page-header { padding: 36px 16px 24px; }
@@ -131,20 +159,22 @@ export class MoviesComponent implements OnInit {
   activeGenre = signal('');
   sortBy = 'rating';
   allMovies = signal<Movie[]>([]);
-  genres = ['Action', 'Horror', 'Drama', 'Sci-Fi', 'Comedy', 'Thriller', 'Romance'];
+  loading = signal(true);
+  genres = ['Action', 'Horror', 'Drama', 'Sci-Fi', 'Comedy', 'Thriller', 'Romance', 'Fantasy'];
 
   constructor(private movieService: MovieService) {}
 
   ngOnInit() {
-    const all = this.movieService.getSections().flatMap(s => s.movies);
-    const unique = all.filter((m, i, arr) => arr.findIndex(x => x.id === m.id) === i);
-    this.allMovies.set(unique);
+    this.movieService.getAllMovies().then(movies => {
+      this.allMovies.set(movies);
+      this.loading.set(false);
+    }).catch(() => this.loading.set(false));
   }
 
   filteredMovies() {
     let movies = this.allMovies();
     if (this.activeGenre()) {
-      movies = movies.filter(m => m.genres.some(g => g === this.activeGenre()));
+      movies = movies.filter(m => m.genres?.some(g => g === this.activeGenre()));
     }
     if (this.sortBy === 'rating') movies = [...movies].sort((a, b) => b.rating - a.rating);
     else if (this.sortBy === 'year') movies = [...movies].sort((a, b) => b.year - a.year);

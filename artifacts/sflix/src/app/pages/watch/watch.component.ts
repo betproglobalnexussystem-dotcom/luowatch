@@ -2,7 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Movie } from '../../models/movie.model';
+import { Movie, AppComment } from '../../models/movie.model';
 import { MovieService } from '../../services/movie.service';
 import { MovieSectionComponent } from '../../components/movie-section/movie-section.component';
 import { AuthService } from '../../services/auth.service';
@@ -117,20 +117,20 @@ import { AuthService } from '../../services/auth.service';
                 </div>
 
                 <div class="comments-section">
-                  <h3 class="section-title">Comments <span class="count-badge">{{ comments.length }}</span></h3>
+                  <h3 class="section-title">Comments <span class="count-badge">{{ comments().length }}</span></h3>
                   <div class="comment-input-row">
-                    <div class="comment-avatar">U</div>
+                    <div class="comment-avatar">{{ authService.currentUser()?.initials || 'U' }}</div>
                     <input class="comment-input" placeholder="Write a comment..." [(ngModel)]="newComment" (keydown.enter)="addComment()">
                     <button class="comment-submit" (click)="addComment()">Post</button>
                   </div>
                   <div class="comments-list">
-                    @for(c of comments; track c.id) {
+                    @for(c of comments(); track c.id) {
                       <div class="comment-item">
                         <div class="c-avatar">{{ c.name[0] }}</div>
                         <div class="c-body">
                           <div class="c-header">
                             <span class="c-name">{{ c.name }}</span>
-                            <span class="c-time">{{ c.time }}</span>
+                            <span class="c-time">{{ formatTime(c.createdAt) }}</span>
                           </div>
                           <p class="c-text">{{ c.text }}</p>
                         </div>
@@ -400,12 +400,8 @@ export class WatchComponent implements OnInit {
   liked = signal(false);
   showPaywall = signal(false);
   newComment = '';
-
-  comments = [
-    { id: 1, name: 'Marcus L.', text: 'Absolutely brilliant! One of the best films of the decade.', time: '2 hours ago' },
-    { id: 2, name: 'Priya S.', text: 'The cinematography is stunning. Watched it twice already!', time: '5 hours ago' },
-    { id: 3, name: 'Alex J.', text: 'Great upload quality, thanks to the VJ!', time: '1 day ago' },
-  ];
+  comments = signal<AppComment[]>([]);
+  currentMovieId: string | number = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -415,19 +411,26 @@ export class WatchComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      const id = Number(params['id']);
-      const movie = this.movieService.getMovieById(id);
-      this.currentMovie.set(movie);
+      const id = params['id'] as string;
+      this.currentMovieId = id;
       this.playing.set(false);
       this.showPaywall.set(false);
-      if (movie) {
-        const all = this.movieService.getAllMovies();
-        const similar = all
-          .filter(m => m.id !== id && m.genres.some(g => movie.genres.includes(g)))
-          .filter((m, i, arr) => arr.findIndex(x => x.id === m.id) === i)
-          .slice(0, 12);
-        this.related.set(similar);
-      }
+      this.comments.set([]);
+      this.movieService.getMovieById(id).then(movie => {
+        this.currentMovie.set(movie);
+        if (movie) {
+          this.movieService.getAllMovies().then(all => {
+            const similar = all
+              .filter(m => String(m.id) !== String(id) && m.genres?.some((g: string) => movie.genres?.includes(g)))
+              .slice(0, 12);
+            this.related.set(similar);
+          });
+          this.movieService.getComments(id).then(comments => {
+            this.comments.set(comments);
+          });
+          this.movieService.incrementViews(id);
+        }
+      });
     });
   }
 
@@ -459,10 +462,29 @@ export class WatchComponent implements OnInit {
   }
 
   addComment() {
-    if (this.newComment.trim()) {
-      this.comments.unshift({ id: Date.now(), name: 'You', text: this.newComment.trim(), time: 'Just now' });
-      this.newComment = '';
-    }
+    if (!this.newComment.trim()) return;
+    const user = this.authService.currentUser();
+    const name = user?.name || 'Guest';
+    const comment: AppComment = {
+      id: Date.now(),
+      uid: user?.uid || 'guest',
+      name,
+      text: this.newComment.trim(),
+      createdAt: Date.now()
+    };
+    this.comments.update(list => [comment, ...list]);
+    this.movieService.addComment(this.currentMovieId, comment);
+    this.newComment = '';
+  }
+
+  formatTime(ts: number): string {
+    const diff = Date.now() - ts;
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'Just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
   }
 
   toggleShare() {
@@ -473,7 +495,7 @@ export class WatchComponent implements OnInit {
 
   nextMovie() {
     const rel = this.related();
-    if (rel.length > 0) window.location.href = `/watch/${rel[0].id}`;
+    if (rel.length > 0) window.location.href = `#/watch/${rel[0].id}`;
   }
 
   onImgError(event: Event) {

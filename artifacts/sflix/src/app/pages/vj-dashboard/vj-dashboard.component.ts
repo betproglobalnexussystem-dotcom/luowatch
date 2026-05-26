@@ -86,7 +86,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                   <div class="mini-list">
                     @for(m of myMovies.slice(0,5); track m.id) {
                       <div class="mini-item">
-                        <img [src]="m.poster" [alt]="m.title" class="mini-poster" (error)="onImgError($event)">
+                        <img [src]="m.posterUrl" [alt]="m.title" class="mini-poster" (error)="onImgError($event)">
                         <div class="mini-info">
                           <div class="mini-title">{{ m.title }}</div>
                           <div class="mini-meta">{{ m.year }} · {{ m.quality }}</div>
@@ -130,7 +130,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                   <tbody>
                     @for(m of myMovies; track m.id) {
                       <tr>
-                        <td><img [src]="m.poster" class="table-poster" (error)="onImgError($event)"></td>
+                        <td><img [src]="m.posterUrl" class="table-poster" (error)="onImgError($event)"></td>
                         <td class="fw">{{ m.title }}</td>
                         <td>{{ m.year }}</td>
                         <td><span class="quality-tag">{{ m.quality }}</span></td>
@@ -230,11 +230,11 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
               <div class="series-grid">
                 @for(s of mySeries; track s.id) {
                   <div class="series-card">
-                    <img [src]="s.poster" [alt]="s.title" class="series-thumb" (error)="onImgError($event)">
+                    <img [src]="s.posterUrl" [alt]="s.title" class="series-thumb" (error)="onImgError($event)">
                     <div class="series-info">
                       <div class="series-title">{{ s.title }}</div>
                       <div class="series-meta">{{ s.year }} · {{ s.episodes.length }} episodes</div>
-                      <div class="series-genres">{{ s.genres.join(', ') }}</div>
+                      <div class="series-genres">{{ s.genre }}</div>
                     </div>
                     <button class="btn-sm" (click)="selectSeries(s); navigate('add-episode')">+ Episode</button>
                   </div>
@@ -424,10 +424,10 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                     <div class="act-avatar">{{ a.userName[0] }}</div>
                     <div class="act-body">
                       <span class="act-user">{{ a.userName }}</span>
-                      <span class="act-action">{{ a.action }}</span>
-                      <span class="act-target">{{ a.target }}</span>
+                      <span class="act-action">{{ a.type }}</span>
+                      <span class="act-target">{{ a.contentTitle }}</span>
                     </div>
-                    <span class="act-time">{{ a.date }}</span>
+                    <span class="act-time">{{ formatActivityDate(a.createdAt) }}</span>
                   </div>
                 }
               </div>
@@ -496,7 +496,7 @@ type VJSection = 'overview' | 'my-movies' | 'upload-movie' | 'series' | 'add-ser
                   <div class="pwm-list">
                     @for(m of downloadedMovies; track m.id) {
                       <div class="pwm-item">
-                        <img [src]="m.poster" class="pwm-poster" (error)="onImgError($event)" alt="">
+                        <img [src]="m.posterUrl" class="pwm-poster" (error)="onImgError($event)" alt="">
                         <div class="pwm-info">
                           <div class="pwm-title">{{ m.title }}</div>
                           <div class="pwm-meta">{{ m.year }} · {{ m.quality }}</div>
@@ -758,25 +758,20 @@ export class VjDashboardComponent implements OnInit {
   async submitMovie() {
     if (!this.uploadForm.title) return;
     this.uploadLoading.set(true);
-    const genres = this.uploadForm.genre ? [this.uploadForm.genre] : [];
     await this.movieService.addMovie({
       title: this.uploadForm.title,
       year: this.uploadForm.year,
       quality: this.uploadForm.quality,
-      genres,
-      duration: this.uploadForm.duration,
-      language: this.uploadForm.language,
-      type: this.uploadForm.type as 'movie' | 'tv',
+      genre: this.uploadForm.genre || '',
       description: this.uploadForm.description,
-      poster: this.uploadForm.posterUrl,
-      backdrop: this.uploadForm.backdropUrl || this.uploadForm.posterUrl,
+      posterUrl: this.uploadForm.posterUrl,
+      type: this.uploadForm.type as any,
       vjId: this.vjId || '',
       vjName: this.vjName,
-      rating: 0,
       views: 0,
       featured: false,
     });
-    await this.movieService.addActivity({ userName: this.vjName, action: 'uploaded movie', target: this.uploadForm.title });
+    await this.movieService.addActivity({ userName: this.vjName, userId: this.vjId || '', type: 'view', contentType: 'movie', contentId: '', contentTitle: this.uploadForm.title });
     this.uploadLoading.set(false);
     this.uploadSuccess.set(true);
     this.resetForm();
@@ -788,12 +783,11 @@ export class VjDashboardComponent implements OnInit {
     await this.movieService.addSeries({
       title: this.seriesForm.title,
       year: this.seriesForm.year,
-      genres: this.seriesForm.genres ? [this.seriesForm.genres] : [],
+      genre: this.seriesForm.genres || '',
       vjId: this.vjId || '',
       vjName: this.vjName,
-      poster: this.seriesForm.posterUrl || '',
+      posterUrl: this.seriesForm.posterUrl || '',
       description: this.seriesForm.description || '',
-      episodes: [],
     });
     this.seriesSuccess.set(true);
     this.loadData();
@@ -802,11 +796,10 @@ export class VjDashboardComponent implements OnInit {
   async submitEpisode() {
     if (!this.episodeForm?.seriesId || !this.episodeForm?.title) { this.episodeSuccess.set(true); return; }
     await this.movieService.addEpisode(this.episodeForm.seriesId, {
-      title: this.episodeForm.title,
+      episodeTitle: this.episodeForm.title,
       episode: this.episodeForm.episode,
       season: this.episodeForm.season,
-      duration: this.episodeForm.duration || '',
-      quality: this.episodeForm.quality || '',
+      vjId: this.vjId || '',
     });
     this.episodeSuccess.set(true);
   }
@@ -820,7 +813,7 @@ export class VjDashboardComponent implements OnInit {
       active: false,
       uploadedBy: this.vjId || 'vj',
     });
-    await this.movieService.addActivity({ userName: this.vjName, action: 'submitted hero slide', target: this.heroForm.movieId });
+    await this.movieService.addActivity({ userName: this.vjName, userId: this.vjId || '', type: 'view', contentType: 'movie', contentId: this.heroForm.movieId, contentTitle: 'Hero Slide' });
     this.heroSuccess.set(true);
   }
 
@@ -859,6 +852,12 @@ export class VjDashboardComponent implements OnInit {
 
   getNetworkName(id: string): string {
     return this.mmNetworks.find(n => n.id === id)?.name ?? id;
+  }
+
+  formatActivityDate(ts: any): string {
+    if (!ts) return '';
+    const d: Date = ts?.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString();
   }
 
   onImgError(event: Event) { (event.target as HTMLImageElement).style.display = 'none'; }

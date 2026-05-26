@@ -101,8 +101,8 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                       <div class="mini-item">
                         <div class="act-dot"></div>
                         <div class="mini-info">
-                          <div class="mini-title">{{ a.userName }} {{ a.action }} {{ a.target }}</div>
-                          <div class="mini-meta">{{ a.date }}</div>
+                          <div class="mini-title">{{ a.userName }} {{ a.type }}d "{{ a.contentTitle }}"</div>
+                          <div class="mini-meta">{{ formatActivityDate(a.createdAt) }}</div>
                         </div>
                       </div>
                     }
@@ -127,10 +127,10 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                   <tbody>
                     @for(m of filteredMovies; track m.id) {
                       <tr>
-                        <td><img [src]="m.poster" class="table-poster" (error)="onImgError($event)"></td>
+                        <td><img [src]="m.posterUrl" class="table-poster" (error)="onImgError($event)"></td>
                         <td class="fw">{{ m.title }}</td>
                         <td>{{ m.year }}</td>
-                        <td><span class="type-pill" [class]="m.type">{{ m.type === 'tv' ? 'TV' : 'Movie' }}</span></td>
+                        <td><span class="type-pill" [class]="m.type">{{ m.type === 'series' ? 'TV' : 'Movie' }}</span></td>
                         <td><span class="quality-tag">{{ m.quality }}</span></td>
                         <td class="vj-name">{{ m.vjName || '—' }}</td>
                         <td>{{ (m.views || 0) | number }}</td>
@@ -157,10 +157,10 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
               @for(s of allSeries; track s.id) {
                 <div class="series-block">
                   <div class="series-header">
-                    <img [src]="s.poster" class="series-thumb" (error)="onImgError($event)">
+                    <img [src]="s.posterUrl" class="series-thumb" (error)="onImgError($event)">
                     <div class="series-meta">
                       <div class="series-title">{{ s.title }}</div>
-                      <div class="series-sub">{{ s.year }} · {{ s.genres.join(', ') }} · VJ: <strong>{{ s.vjName }}</strong></div>
+                      <div class="series-sub">{{ s.year }} · {{ s.genre }} · VJ: <strong>{{ s.vjName }}</strong></div>
                       <div class="series-sub">{{ s.episodes.length }} episodes</div>
                     </div>
                     <div class="action-btns">
@@ -171,8 +171,8 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                   <div class="episodes-list">
                     @for(ep of s.episodes; track ep.id) {
                       <div class="ep-item">
-                        <span class="ep-num">S{{ ep.season }}E{{ ep.episode }}</span>
-                        <span class="ep-title">{{ ep.title }}</span>
+                        <span class="ep-num">{{ ep.season }}{{ ep.episode }}</span>
+                        <span class="ep-title">{{ ep.episodeTitle }}</span>
                         <span class="ep-dur">{{ ep.duration }}</span>
                         <span class="quality-tag sm">{{ ep.quality }}</span>
                         <div class="action-btns">
@@ -443,10 +443,10 @@ type AdminSection = 'overview' | 'movies' | 'series' | 'users' | 'vjs' | 'upload
                     <div class="act-avatar">{{ a.userName[0] }}</div>
                     <div class="act-body">
                       <span class="act-user">{{ a.userName }}</span>
-                      <span class="act-action">{{ a.action }}</span>
-                      <span class="act-target">{{ a.target }}</span>
+                      <span class="act-action">{{ a.type }}</span>
+                      <span class="act-target">{{ a.contentTitle }}</span>
                     </div>
-                    <span class="act-time">{{ a.date }}</span>
+                    <span class="act-time">{{ formatActivityDate(a.createdAt) }}</span>
                   </div>
                 }
               </div>
@@ -848,27 +848,28 @@ export class AdminDashboardComponent implements OnInit {
   async adminSubmitUpload() {
     if (!this.adminUpload.title) return;
     this.uploadLoading.set(true);
-    const genres = this.adminUpload.genre ? [this.adminUpload.genre] : [];
     await this.movieService.addMovie({
       title: this.adminUpload.title,
       year: this.adminUpload.year,
       quality: this.adminUpload.quality,
-      genres,
-      duration: this.adminUpload.duration,
-      language: this.adminUpload.language,
-      type: this.adminUpload.type as 'movie' | 'tv',
+      genre: this.adminUpload.genre || '',
       description: this.adminUpload.description,
-      poster: this.adminUpload.posterUrl,
-      backdrop: this.adminUpload.posterUrl,
+      posterUrl: this.adminUpload.posterUrl,
       vjId: this.adminUpload.vjId,
-      rating: 0,
+      type: this.adminUpload.type as any,
       views: 0,
       featured: false,
     });
-    await this.movieService.addActivity({ userName: 'Admin', action: 'uploaded movie', target: this.adminUpload.title });
+    await this.movieService.addActivity({ userName: 'Admin', userId: 'admin', type: 'view', contentType: 'movie', contentId: '', contentTitle: this.adminUpload.title });
     this.uploadLoading.set(false);
     this.uploadSuccess.set(true);
     this.loadAllData();
+  }
+
+  formatActivityDate(ts: any): string {
+    if (!ts) return '';
+    const d: Date = ts?.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString();
   }
 
   onImgError(event: Event) { (event.target as HTMLImageElement).style.display = 'none'; }

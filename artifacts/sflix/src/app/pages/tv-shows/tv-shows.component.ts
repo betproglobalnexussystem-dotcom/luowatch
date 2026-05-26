@@ -134,6 +134,6 @@ export class TvShowsComponent implements OnInit {
   shows() {
     const genre = this.activeGenre();
     if (genre === 'All') return this.allShows();
-    return this.allShows().filter(m => m.genres?.some(g => g === genre));
+    return this.allShows().filter(m => (m.genre || '').toLowerCase().includes(genre.toLowerCase()));
   }
 }

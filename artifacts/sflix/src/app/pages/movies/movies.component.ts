@@ -174,10 +174,10 @@ export class MoviesComponent implements OnInit {
   filteredMovies() {
     let movies = this.allMovies();
     if (this.activeGenre()) {
-      movies = movies.filter(m => m.genres?.some(g => g === this.activeGenre()));
+      movies = movies.filter(m => (m.genre || '').toLowerCase().includes(this.activeGenre().toLowerCase()));
     }
-    if (this.sortBy === 'rating') movies = [...movies].sort((a, b) => b.rating - a.rating);
-    else if (this.sortBy === 'year') movies = [...movies].sort((a, b) => b.year - a.year);
+    if (this.sortBy === 'rating') movies = [...movies].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    else if (this.sortBy === 'year') movies = [...movies].sort((a, b) => Number(b.year) - Number(a.year));
     else movies = [...movies].sort((a, b) => a.title.localeCompare(b.title));
     return movies;
   }

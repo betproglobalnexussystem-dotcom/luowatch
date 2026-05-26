@@ -21,7 +21,7 @@ import { AuthService } from '../../services/auth.service';
             <div class="breadcrumb">
               <a routerLink="/" class="bc-link">Home</a>
               <span class="bc-sep">›</span>
-              <a [routerLink]="['/movies']" class="bc-link">{{ movie.type === 'tv' ? 'TV Shows' : 'Movies' }}</a>
+              <a [routerLink]="['/movies']" class="bc-link">{{ movie.type === 'series' ? 'TV Shows' : 'Movies' }}</a>
               <span class="bc-sep">›</span>
               <span class="bc-current">{{ movie.title }}</span>
             </div>
@@ -31,7 +31,7 @@ import { AuthService } from '../../services/auth.service';
 
                 <div class="player-wrap">
                   <div class="player-box">
-                    <div class="player-poster" [style.background-image]="'url(' + movie.backdrop + ')'">
+                    <div class="player-poster" [style.background-image]="'url(' + movie.posterUrl + ')'">
                       <div class="player-overlay">
                         <button class="play-big-btn" (click)="tryPlay()">
                           @if(!playing()) {
@@ -76,11 +76,11 @@ import { AuthService } from '../../services/auth.service';
                 <div class="movie-info-card">
                   <div class="movie-info-top">
                     <div class="mi-poster">
-                      <img [src]="movie.poster" [alt]="movie.title" (error)="onImgError($event)">
+                      <img [src]="movie.posterUrl" [alt]="movie.title" (error)="onImgError($event)">
                     </div>
                     <div class="mi-details">
                       <div class="mi-badges">
-                        <span class="badge-type">{{ movie.type === 'tv' ? 'TV SERIES' : 'MOVIE' }}</span>
+                        <span class="badge-type">{{ movie.type === 'series' ? 'TV SERIES' : 'MOVIE' }}</span>
                         @if(movie.quality) { <span class="badge-quality">{{ movie.quality }}</span> }
                         @if(movie.vjName) {
                           <span class="badge-vj">
@@ -101,8 +101,8 @@ import { AuthService } from '../../services/auth.service';
                         @if(movie.views) { <span>{{ movie.views | number }} views</span> }
                       </div>
                       <div class="mi-genres">
-                        @for(genre of movie.genres; track genre) {
-                          <span class="genre-pill">{{ genre }}</span>
+                        @if(movie.genre) {
+                          <span class="genre-pill">{{ movie.genre }}</span>
                         }
                       </div>
                       <p class="mi-desc">{{ movie.description }}</p>
@@ -126,10 +126,10 @@ import { AuthService } from '../../services/auth.service';
                   <div class="comments-list">
                     @for(c of comments(); track c.id) {
                       <div class="comment-item">
-                        <div class="c-avatar">{{ c.name[0] }}</div>
+                        <div class="c-avatar">{{ (c.userName || 'U')[0] }}</div>
                         <div class="c-body">
                           <div class="c-header">
-                            <span class="c-name">{{ c.name }}</span>
+                            <span class="c-name">{{ c.userName }}</span>
                             <span class="c-time">{{ formatTime(c.createdAt) }}</span>
                           </div>
                           <p class="c-text">{{ c.text }}</p>
@@ -147,7 +147,7 @@ import { AuthService } from '../../services/auth.service';
                   @for(r of related(); track r.id) {
                     <a [routerLink]="['/watch', r.id]" class="sidebar-item">
                       <div class="si-poster">
-                        <img [src]="r.poster" [alt]="r.title" (error)="onImgError($event)">
+                        <img [src]="r.posterUrl" [alt]="r.title" (error)="onImgError($event)">
                         @if(r.quality) { <span class="si-quality">{{ r.quality }}</span> }
                       </div>
                       <div class="si-info">
@@ -421,7 +421,7 @@ export class WatchComponent implements OnInit {
         if (movie) {
           this.movieService.getAllMovies().then(all => {
             const similar = all
-              .filter(m => String(m.id) !== String(id) && m.genres?.some((g: string) => movie.genres?.includes(g)))
+              .filter(m => String(m.id) !== String(id) && movie.genre && (m.genre || '').toLowerCase().includes((movie.genre || '').toLowerCase()))
               .slice(0, 12);
             this.related.set(similar);
           });
@@ -467,18 +467,21 @@ export class WatchComponent implements OnInit {
     const name = user?.name || 'Guest';
     const comment: AppComment = {
       id: Date.now(),
-      uid: user?.uid || 'guest',
-      name,
+      contentId: String(this.currentMovieId),
+      contentType: 'movie',
+      userId: user?.uid || 'guest',
+      userName: name,
       text: this.newComment.trim(),
       createdAt: Date.now()
     };
     this.comments.update(list => [comment, ...list]);
-    this.movieService.addComment(this.currentMovieId, comment);
+    this.movieService.addComment(this.currentMovieId, { ...comment, contentType: 'movie' });
     this.newComment = '';
   }
 
-  formatTime(ts: number): string {
-    const diff = Date.now() - ts;
+  formatTime(ts: any): string {
+    const ms = ts?.toMillis?.() ?? (typeof ts === 'number' ? ts : Date.now());
+    const diff = Date.now() - ms;
     const m = Math.floor(diff / 60000);
     if (m < 1) return 'Just now';
     if (m < 60) return `${m}m ago`;

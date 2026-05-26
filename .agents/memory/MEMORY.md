@@ -1,0 +1,2 @@
+- [Firebase schema alignment](firebase-schema.md) — Firestore uses `posterUrl`, `movieUrl`, `genre` (string), `type:'series'`, `profiles` collection (not `users`), flat `episodes` collection linked by `movieId`.
+- [Firestore composite index avoidance](firestore-indexes.md) — Avoid combining `where()` + `orderBy()` on different fields; do secondary sorting client-side to prevent index-required errors.

@@ -14,7 +14,7 @@ import { MovieService } from '../../services/movie.service';
         <div
           class="hero-slide"
           [class.active]="i === currentIndex()"
-          [style.background-image]="'url(' + movie.backdrop + ')'"
+          [style.background-image]="'url(' + movie.posterUrl + ')'"
         ></div>
       }
 

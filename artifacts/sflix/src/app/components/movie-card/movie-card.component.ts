@@ -11,7 +11,7 @@ import { Movie } from '../../models/movie.model';
     <a class="card" [routerLink]="['/watch', movie.id]">
       <div class="card-cover">
         <img
-          [src]="movie.poster"
+          [src]="movie.posterUrl"
           [alt]="movie.title"
           loading="lazy"
           (error)="onImgError($event)"
@@ -26,7 +26,7 @@ import { Movie } from '../../models/movie.model';
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </button>
           <div class="hover-info">
-            @if(movie.rating > 0) {
+            @if((movie.rating ?? 0) > 0) {
               <span class="hover-rating">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="#F5852F"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 {{ movie.rating | number:'1.1-1' }}

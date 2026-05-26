@@ -1,22 +1,24 @@
 export interface Movie {
   id: string | number;
   title: string;
-  year: number;
-  rating: number;
-  genres: string[];
+  year: string | number;
+  rating?: number;
+  genre: string;
   description: string;
-  backdrop: string;
-  poster: string;
-  duration: string;
+  posterUrl: string;
+  backdrop?: string;
+  movieUrl?: string;
+  downloadUrl?: string;
+  duration?: string;
   language?: string;
   quality?: string;
-  type: 'movie' | 'tv';
+  type: 'movie' | 'series';
   vjName?: string;
   vjId?: string;
   views?: number;
-  videoUrl?: string;
+  downloads?: number;
   featured?: boolean;
-  createdAt?: number;
+  createdAt?: any;
 }
 
 export interface MovieSection {
@@ -28,26 +30,39 @@ export interface MovieSection {
 export interface Series {
   id: string | number;
   title: string;
-  year: number;
-  genres: string[];
+  year: string | number;
+  genre: string;
   description: string;
-  poster: string;
-  backdrop: string;
+  posterUrl: string;
+  backdrop?: string;
   vjName: string;
   vjId?: string;
   episodes: Episode[];
-  createdAt?: number;
+  createdAt?: any;
 }
 
 export interface Episode {
   id: string | number;
-  seriesId: string | number;
-  title: string;
-  episode: number;
-  season: number;
-  duration: string;
-  videoUrl?: string;
+  movieId: string;
+  seriesTitle?: string;
+  season: string;
+  episode: string;
+  episodeTitle?: string;
+  episodeUrl?: string;
+  vjId?: string;
+  duration?: string;
   quality?: string;
+  createdAt?: any;
+}
+
+export interface Profile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: 'viewer' | 'vj' | 'musician' | 'tiktoker' | 'admin';
+  phone?: string;
+  email: string;
+  createdAt?: any;
 }
 
 export interface VJ {
@@ -88,11 +103,13 @@ export interface Transaction {
 
 export interface Activity {
   id: string | number;
-  userId: string | number;
+  type: 'view' | 'download' | 'share' | 'comment' | 'like' | 'save';
+  contentType: 'movie' | 'music' | 'tiktok' | 'channel';
+  contentId: string;
+  contentTitle: string;
+  userId: string;
   userName: string;
-  action: string;
-  target: string;
-  date: string;
+  createdAt?: any;
 }
 
 export interface HeroSlide {
@@ -107,8 +124,11 @@ export interface HeroSlide {
 
 export interface AppComment {
   id: string | number;
-  uid: string;
-  name: string;
+  contentId: string;
+  contentType: 'movie' | 'music' | 'tiktok' | 'channel';
+  userId: string;
+  userName: string;
   text: string;
-  createdAt: number;
+  likes?: number;
+  createdAt?: any;
 }

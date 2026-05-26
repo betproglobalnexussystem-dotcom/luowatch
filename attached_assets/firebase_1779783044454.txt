@@ -1,0 +1,749 @@
+================================================================================
+LUO WATCH — FIREBASE FULL DOCUMENTATION
+================================================================================
+This file documents EVERYTHING about how Firebase is used in this project:
+- Configuration / SDKs
+- Authentication (email, Google, profiles, roles)
+- Firestore collections, document shapes, IDs
+- How data is SAVED (writes) and FETCHED (reads / realtime subscriptions)
+- How every page / dashboard / component uses Firebase
+- Subscriptions & payments persistence
+- Storage / Uploads (Cloudflare R2 — NOT Firebase Storage)
+- Security notes, indexes, gotchas
+
+You can paste this file into another AI and tell it: "Use this exact Firebase
+schema and access pattern." All code names below match the real codebase.
+
+================================================================================
+1. PACKAGES
+================================================================================
+package.json deps used:
+  - firebase (modular v9+ SDK)
+    Imports used:
+      firebase/app           -> initializeApp
+      firebase/auth          -> getAuth, GoogleAuthProvider,
+                                onAuthStateChanged,
+                                signInWithEmailAndPassword,
+                                createUserWithEmailAndPassword,
+                                signInWithPopup, signOut, updateProfile
+      firebase/firestore     -> getFirestore, collection, doc, addDoc,
+                                setDoc, updateDoc, deleteDoc, getDoc, getDocs,
+                                query, where, orderBy, limit, increment,
+                                serverTimestamp, onSnapshot, Timestamp,
+                                QueryConstraint
+      firebase/storage       -> getStorage (imported but not actively used;
+                                uploads go to Cloudflare R2 via worker)
+
+================================================================================
+2. FIREBASE INITIALIZATION  (src/lib/firebase.ts)
+================================================================================
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBrvw6lZCFUMIQKPjbLQn88U8aYXSMBllo",
+  authDomain: "luo-watch.firebaseapp.com",
+  projectId: "luo-watch",
+  storageBucket: "luo-watch.firebasestorage.app",
+  messagingSenderId: "715391513900",
+  appId: "1:715391513900:web:eb58773716134d3c60a889",
+  measurementId: "G-275C5X897V",
+};
+
+const app = initializeApp(firebaseConfig);
+export const auth          = getAuth(app);
+export const db            = getFirestore(app);
+export const storage       = getStorage(app);
+export const googleProvider = new GoogleAuthProvider();
+
+Notes:
+  * These keys are PUBLIC (client config) — safe in source.
+  * Auth must have "Email/Password" and "Google" providers enabled
+    in Firebase console.
+  * Add your preview/published domains to Auth -> Settings -> Authorized
+    domains, otherwise Google sign-in popup fails.
+
+================================================================================
+3. FIRESTORE DATA MODEL  (all collections + document shape)
+================================================================================
+All collections live at the root of the (default) database in project
+`luo-watch`. Document IDs are auto-generated unless noted.
+
+------------------------------------------------------------------- profiles ---
+Doc ID = Firebase Auth UID (manual setDoc).
+{
+  firstName: string,
+  lastName:  string,
+  role:      "viewer" | "vj" | "musician" | "tiktoker" | "admin",
+  phone?:    string,
+  email:     string,
+  createdAt: serverTimestamp()   // only on first create
+}
+
+--------------------------------------------------------------------- movies ---
+Doc ID = auto.
+{
+  title:       string,
+  year:        string,
+  quality:     string,            // e.g. "1080p"
+  genre:       string,
+  description: string,
+  posterUrl:   string,            // public URL (R2 or external)
+  movieUrl:    string,            // video URL (Google Drive / R2 / etc.)
+  downloadUrl: string,
+  views:       number,            // default 0, atomic increment(1)
+  downloads:   number,            // default 0, atomic increment(1)
+  featured:    boolean,
+  type:        "movie" | "series",
+  vjId:        string,            // auth uid of the VJ owner
+  vjName:      string,
+  createdAt:   serverTimestamp()
+}
+
+------------------------------------------------------------------- episodes ---
+Used only when movies.type === "series".
+{
+  movieId:       string,   // -> movies/{id}
+  seriesTitle:   string,
+  season:        string,   // "S01"
+  episode:       string,   // "E03"
+  episodeTitle:  string,
+  episodeUrl:    string,
+  vjId:          string,
+  createdAt:     serverTimestamp()
+}
+Required composite index:
+  episodes: (movieId ASC, season ASC, episode ASC)
+  episodes: (vjId ASC,   createdAt DESC)
+
+---------------------------------------------------------------------- music ---
+{
+  title:        string,
+  artist:       string,
+  genre:        string,
+  year:         string,
+  thumbnailUrl: string,
+  videoUrl:     string,
+  duration:     string,         // "03:42"
+  plays:        number,         // increment(1)
+  downloads:    number,
+  musicianId:   string,         // auth uid
+  musicianName: string,
+  verified:     boolean,
+  createdAt:    serverTimestamp()
+}
+
+--------------------------------------------------------------------- tiktok ---
+{
+  title:           string,
+  description:     string,
+  videoUrl:        string,
+  thumbnailUrl:    string,
+  music:           string,
+  likes:           number,
+  comments:        number,
+  shares:          number,
+  saves:           number,
+  views:           number,
+  tiktokerId:      string,        // auth uid
+  tiktokerName:    string,
+  tiktokerAvatar:  string,
+  verified:        boolean,
+  createdAt:       serverTimestamp()
+}
+
+------------------------------------------------------------------- channels ---
+Live TV channels (some are HARD-CODED in code; rest come from Firestore).
+{
+  name:        string,
+  logoUrl:     string,
+  streamUrl:   string,  // HLS .m3u8
+  isLive:      boolean,
+  description: string,
+  vjId:        string,
+  createdAt:   serverTimestamp()
+}
+
+------------------------------------------------------------------- comments ---
+Universal comments — works for movies, music, tiktok, channels.
+{
+  contentId:    string,
+  contentType:  "movie" | "music" | "tiktok" | "channel",
+  userId:       string,
+  userName:     string,
+  text:         string,
+  likes:        number,
+  createdAt:    serverTimestamp()
+}
+Required composite index:
+  comments: (contentId ASC, contentType ASC, createdAt DESC)
+
+----------------------------------------------------------------- activities ---
+Activity log for admin dashboard feed.
+{
+  type:         "view" | "download" | "share" | "comment" | "like" | "save",
+  contentType:  "movie" | "music" | "tiktok" | "channel",
+  contentId:    string,
+  contentTitle: string,
+  userId:       string,
+  userName:     string,
+  createdAt:    serverTimestamp()
+}
+Latest 50 are subscribed in real time (orderBy createdAt desc, limit 50).
+
+-------------------------------------------------------------- subscriptions ---
+Doc ID = `${userId}_content` OR `${userId}_games`  (deterministic).
+{
+  userId:          string,
+  type:            "content" | "games",
+  planId:          string,
+  expiresAt:       Timestamp,            // Timestamp.fromDate(Date)
+  transactionRef:  string,
+  activatedAt:     Timestamp.now()
+}
+"Active" is computed client-side: expiresAt > new Date().
+
+------------------------------------------------------------------- payments ---
+Doc ID = transactionRef (deterministic, prevents duplicates).
+{
+  userId:         string,
+  type:           "content" | "games",
+  planId:         string,
+  amount:         number,
+  transactionRef: string,
+  status:         "completed" | ...,
+  createdAt:      Timestamp.now()
+}
+
+================================================================================
+4. ALL FIRESTORE HELPERS  (src/lib/firestore.ts)
+================================================================================
+Every page uses these helpers — they wrap raw Firestore SDK calls.
+
+PROFILES
+  saveProfileToFirestore(uid, data)   // upsert into profiles/{uid}
+  getProfile(uid)                     // -> FireProfile | null
+
+MOVIES
+  addMovie(data)                              // addDoc, sets views=0, downloads=0, createdAt
+  getMovies(constraints?)                     // one-shot
+  getMovieById(id)
+  updateMovie(id, partial)
+  deleteMovie(id)
+  subscribeMovies(constraints, cb)            // realtime onSnapshot
+  incrementMovieViews(id)                     // updateDoc views: increment(1)
+  incrementMovieDownloads(id)
+
+EPISODES
+  addEpisode(data)
+  getEpisodes(movieId)                        // ordered by season, then episode
+  getEpisodesByVJ(vjId)
+  updateEpisode / deleteEpisode
+
+MUSIC
+  addMusicVideo / getMusicVideos / getMusicById / updateMusicVideo /
+  deleteMusicVideo / subscribeMusic(constraints, cb) / incrementMusicPlays
+
+TIKTOK
+  addTikTokVideo / getTikTokVideos / deleteTikTokVideo /
+  subscribeTikTok(constraints, cb) /
+  incrementTikTokField(id, "likes" | "shares" | "saves" | "views")
+
+CHANNELS
+  addChannel / getChannels / getChannelById
+  (Live realtime listening is NOT used — channels list is fetched once.)
+
+COMMENTS
+  addComment / getComments / subscribeComments(contentId, contentType, cb) /
+  likeComment
+
+ACTIVITIES
+  logActivity(data) / subscribeActivities(cb)   // latest 50 realtime
+
+SEARCH
+  searchContent(term)  -> { movies, music, tiktok }
+  Implementation: pulls FULL collection, filters in JS (case-insensitive
+  on title/genre/artist/description/vjName). Fine while small; replace
+  with Algolia / Typesense at scale.
+
+================================================================================
+5. REACT HOOK LAYER  (src/hooks/useFirestore.ts)
+================================================================================
+These hooks are what 99% of pages call. They wrap the subscribe* helpers and
+hold local React state + loading flag.
+
+  useMovies(constraints?)         -> { movies, loading }   realtime
+  useFeaturedMovies()             -> filters featured===true client-side
+  useVJMovies(vjId)               -> where vjId == vjId
+  useMovie(id)                    -> one-shot getMovieById
+  useEpisodes(movieId)            -> one-shot getEpisodes
+
+  useMusicVideos(constraints?)    -> realtime
+  useMusicianVideos(musicianId)   -> where musicianId == ...
+  useMusicById(id)
+
+  useTikTokVideos(constraints?)
+  useTikTokerVideos(tiktokerId)
+
+  useComments(contentId, contentType)     // realtime
+  useChannels()                           // HARDCODED + Firestore merged
+  useActivities()                         // realtime, last 50
+
+All hooks default ordering to: orderBy("createdAt", "desc").
+Pass a custom `constraints` array to override (e.g. [where("featured","==",true), limit(10)]).
+
+================================================================================
+6. AUTH FLOW  (src/contexts/AuthContext.tsx)
+================================================================================
+Wrapper around Firebase Auth + profiles collection.
+
+Mount:
+  useEffect:
+    onAuthStateChanged(auth, async fbUser => {
+      if (fbUser) setUser(await buildUser(fbUser));
+      else setUser(null);
+      setIsLoading(false);
+    });
+
+buildUser(fbUser):
+  const profile = await getProfile(fbUser.uid);  // profiles/{uid}
+  return {
+    id: fbUser.uid,
+    email: fbUser.email,
+    firstName: profile?.firstName ?? fbUser.displayName.split(" ")[0],
+    lastName:  profile?.lastName  ?? rest of displayName,
+    role:      profile?.role ?? "viewer",
+    phone:     profile?.phone,
+  };
+
+login(email, password):
+  signInWithEmailAndPassword(auth, email, password)
+
+register({email, password, firstName, lastName, role, phone}):
+  cred = createUserWithEmailAndPassword(...)
+  updateProfile(cred.user, { displayName: "First Last" })
+  saveProfileToFirestore(cred.user.uid, { firstName, lastName, role, phone, email })
+
+loginWithGoogle():
+  signInWithPopup(auth, googleProvider)
+  if no profiles/{uid} exists yet -> create one with role "viewer"
+
+logout(): signOut(auth)
+
+Roles drive routing:
+  /vj-dashboard         -> role "vj"
+  /musician-dashboard   -> role "musician"
+  /tiktoker-dashboard   -> role "tiktoker"
+  /admin                -> hardcoded ADMIN_EMAILS in SubscriptionContext
+                          (luowatch0@gmail.com, mainplatform.nexus@gmail.com)
+ProtectedDashboard component gates by allowedRole.
+
+================================================================================
+7. SUBSCRIPTIONS  (src/contexts/SubscriptionContext.tsx)
+================================================================================
+Reads two docs per user (one-shot getDoc on user change):
+  subscriptions/{uid}_content
+  subscriptions/{uid}_games
+
+Computes:
+  isAdmin   = ADMIN_EMAILS.includes(user.email)
+  isCreator = CREATOR_ROLES.includes(profiles/{uid}.role)   // vj/musician/tiktoker
+  hasContentAccess = isAdmin || isCreator || (contentSub.expiresAt > now)
+  hasGamesAccess   = isAdmin || (gamesSub.expiresAt > now)
+
+Writing (after a Mobile Money payment succeeds):
+  activateSubscription(userId, type, planId, durationDays, transactionRef):
+    setDoc(subscriptions/{userId}_{type}, {
+      userId, type, planId,
+      expiresAt: Timestamp.fromDate(now + durationDays),
+      transactionRef,
+      activatedAt: Timestamp.now(),
+    });
+    setDoc(payments/{transactionRef}, {
+      userId, type, planId, amount: 0,
+      transactionRef, status: "completed",
+      createdAt: Timestamp.now(),
+    });
+
+Pricing (referenced in app): UGX 3,500/day content, UGX 1,000/day games.
+Payment HTTP API is Cloudflare worker — NOT Firebase. See src/lib/payments.ts.
+
+================================================================================
+8. PAGE-BY-PAGE: HOW EACH SCREEN USES FIREBASE
+================================================================================
+
+------------------------------ src/pages/Index.tsx  (Home) ---------------------
+- useFeaturedMovies()  -> Banner slider
+- useMovies()          -> "Latest Movies" grid (via <LatestMovies />)
+- useActivities()      -> live activity ticker (if shown)
+- useChannels()        -> small live TV strip
+
+------------------------------ src/pages/MusicPage.tsx -------------------------
+- useMusicVideos()                  realtime list
+- onClick play -> incrementMusicPlays(id) + logActivity(type:"view")
+
+------------------------------ src/pages/MusicPlayerPage.tsx -------------------
+- useMusicById(id)                  one-shot
+- useComments(id, "music")          realtime
+- addComment({ contentId:id, contentType:"music", userId, userName, text })
+- incrementMusicPlays(id) on mount
+
+------------------------------ src/pages/LiveTVPage.tsx ------------------------
+- useChannels()  (HARDCODED list + Firestore extras merged)
+
+------------------------------ src/pages/TVPlayerPage.tsx ----------------------
+- finds channel from useChannels() by :id
+- useComments(id, "channel") realtime
+- HLS playback via <HLSPlayer />
+
+------------------------------ src/pages/MoviePlayerPage.tsx -------------------
+- useMovie(id)               one-shot
+- useEpisodes(id)            if type === "series"
+- useComments(id, "movie")   realtime
+- incrementMovieViews(id) on mount
+- "Download" -> incrementMovieDownloads(id) + logActivity("download")
+- SubscriptionGate enforces hasContentAccess before playing
+
+------------------------------ src/pages/TikTokPage.tsx ------------------------
+- useTikTokVideos()                  realtime vertical feed
+- per-video actions:
+    incrementTikTokField(id, "likes" | "shares" | "saves" | "views")
+- addComment for each video's comment drawer
+
+------------------------------ src/pages/GamesPage.tsx -------------------------
+- Gated by useSubscription().hasGamesAccess
+- Game catalog itself is currently static data (src/data) — no Firestore reads.
+
+------------------------------ src/pages/VJDashboard.tsx -----------------------
+For role "vj" only (CreatorPaymentGate also enforces a one-time creator fee).
+- useVJMovies(user.id)                          realtime list of own movies
+- getEpisodesByVJ(user.id)                      list of own episodes
+- Add Movie  -> uploadToS3(file) for poster/video, then addMovie({ ..., vjId:user.id, vjName:user.firstName+lastName })
+- Add Episode -> addEpisode({ movieId, season, episode, episodeUrl, vjId:user.id, ... })
+- Edit       -> updateMovie(id, partial) / updateEpisode(id, partial)
+- Delete     -> deleteMovie(id) / deleteEpisode(id)
+- Stats cards = sum of views/downloads across own movies.
+
+------------------------------ src/pages/MusicianDashboard.tsx -----------------
+- useMusicianVideos(user.id)
+- addMusicVideo({ ..., musicianId:user.id, musicianName, verified:false })
+- updateMusicVideo / deleteMusicVideo
+- Files (thumbnail + video) uploaded via uploadToS3.
+
+------------------------------ src/pages/TikTokerDashboard.tsx -----------------
+- useTikTokerVideos(user.id)
+- addTikTokVideo({ ..., tiktokerId:user.id, tiktokerName, tiktokerAvatar })
+- deleteTikTokVideo(id)
+
+------------------------------ src/pages/AdminDashboard.tsx --------------------
+Open access at /admin route. Gate it yourself by ADMIN_EMAILS.
+- useMovies(), useMusicVideos(), useTikTokVideos(), useChannels(), useActivities()
+- Aggregate counts, totals of views/plays/downloads.
+- Moderation actions:
+    deleteMovie(id) / deleteMusicVideo(id) / deleteTikTokVideo(id)
+    updateMovie(id, { featured: true })
+    updateMusicVideo(id, { verified: true })
+- Add Channel -> addChannel({ name, logoUrl, streamUrl, isLive:true, ... })
+- Live activity feed comes from subscribeActivities (last 50).
+
+------------------------------ src/components/CommentSection.tsx ---------------
+Generic comment box used in every player page.
+Props: { contentId, contentType }
+- useComments(contentId, contentType)         realtime list
+- addComment({ contentId, contentType, userId:user.id, userName:`${user.firstName} ${user.lastName}`, text })
+- likeComment(id)
+
+------------------------------ src/components/SearchResults.tsx ----------------
+- onChange of header search: await searchContent(term)
+- Renders three tabs: movies / music / tiktok.
+
+------------------------------ src/components/MovieCard.tsx --------------------
+- Renders movie; clicking navigates to /movie/:id.
+- Some variants call incrementMovieViews on click.
+
+------------------------------ src/components/CreatorAuthModal.tsx -------------
+Same as AuthModal but forces register flow with a preset role
+(vj | musician | tiktoker) so the profile written to profiles/{uid}
+has the creator role from the start.
+
+------------------------------ src/components/CreatorPaymentGate.tsx -----------
+Reads payments collection (or a creator_payments doc) to see if the creator
+paid their one-time onboarding fee for the given role. Wraps each creator
+dashboard inside <ProtectedDashboard>.
+
+================================================================================
+9. WRITE PATTERNS — EXACT EXAMPLES
+================================================================================
+ADD A MOVIE (VJ Dashboard):
+  await addMovie({
+    title, year, quality, genre, description,
+    posterUrl,   // from uploadToS3(file, "posters")
+    movieUrl,    // from uploadToS3(file, "movies") OR external URL
+    downloadUrl,
+    featured: false,
+    type: "movie" | "series",
+    vjId: user.id,
+    vjName: `${user.firstName} ${user.lastName}`.trim(),
+  });
+  // views, downloads, createdAt are auto-set inside addMovie()
+
+ADD AN EPISODE:
+  await addEpisode({
+    movieId,            // the series doc id
+    seriesTitle,
+    season: "S01",
+    episode: "E03",
+    episodeTitle,
+    episodeUrl,
+    vjId: user.id,
+  });
+
+ADD MUSIC VIDEO:
+  await addMusicVideo({
+    title, artist, genre, year,
+    thumbnailUrl, videoUrl, duration,
+    musicianId: user.id, musicianName: ..., verified: false,
+  });
+
+ADD TIKTOK:
+  await addTikTokVideo({
+    title, description, videoUrl, thumbnailUrl, music,
+    tiktokerId: user.id, tiktokerName: ..., tiktokerAvatar: ...,
+    verified: false,
+  });
+
+POST A COMMENT:
+  await addComment({
+    contentId, contentType: "movie" | "music" | "tiktok" | "channel",
+    userId: user.id, userName: `${user.firstName} ${user.lastName}`,
+    text,
+  });
+
+LOG ACTIVITY (good to call from every meaningful user action):
+  await logActivity({
+    type: "view" | "download" | "share" | "comment" | "like" | "save",
+    contentType: "movie" | "music" | "tiktok" | "channel",
+    contentId, contentTitle,
+    userId: user.id, userName: `${user.firstName} ${user.lastName}`,
+  });
+
+INCREMENT COUNTERS (atomic):
+  incrementMovieViews(id)        // movies/{id}.views += 1
+  incrementMovieDownloads(id)
+  incrementMusicPlays(id)
+  incrementTikTokField(id, "likes"|"shares"|"saves"|"views")
+
+================================================================================
+10. READ PATTERNS — EXACT EXAMPLES
+================================================================================
+REALTIME LIST OF MOVIES (default newest first):
+  const { movies, loading } = useMovies();
+
+ONLY FEATURED:
+  useMovies([where("featured","==",true), orderBy("createdAt","desc")])
+  // OR shortcut: useFeaturedMovies()
+
+ONLY ONE VJ'S MOVIES:
+  useVJMovies(user.id);
+
+ONE MOVIE BY ID:
+  const { movie, loading } = useMovie(id);
+
+EPISODES FOR A SERIES:
+  const { episodes, loading } = useEpisodes(movieId);
+
+COMMENTS REALTIME:
+  const { comments, loading } = useComments(contentId, "movie");
+
+ACTIVITY FEED:
+  const { activities, loading } = useActivities();
+
+CHANNELS:
+  const { channels, loading } = useChannels();   // hardcoded + Firestore
+
+RAW (without hook) one-shot with constraints:
+  const movies = await getMovies([
+    where("type","==","series"),
+    orderBy("createdAt","desc"),
+    limit(20),
+  ]);
+
+================================================================================
+11. STORAGE / FILE UPLOADS  (NOT Firebase Storage!)
+================================================================================
+File: src/lib/s3Upload.ts
+Endpoint: https://upload.livrauganda.workers.dev/  (Cloudflare Worker -> R2)
+  uploadToS3(file, folder="source", onProgress?) -> Promise<string publicUrl>
+Returned URL is then stored in Firestore fields:
+  movies.posterUrl, movies.movieUrl, movies.downloadUrl,
+  music.thumbnailUrl, music.videoUrl,
+  tiktok.thumbnailUrl, tiktok.videoUrl,
+  channels.logoUrl, channels.streamUrl (HLS)
+
+Firebase Storage SDK is imported but unused. If you want to switch to
+Firebase Storage, swap uploadToS3() to use uploadBytes / getDownloadURL.
+
+================================================================================
+12. PAYMENTS  (Mobile Money via Cloudflare Worker, then Firestore write)
+================================================================================
+File: src/lib/payments.ts
+Endpoint base: https://api.livrauganda.workers.dev/api
+Flow:
+  1. requestPayment(msisdn, amount, description)         -> { internal_reference }
+  2. pollPaymentStatus(internal_reference, onSuccess, onFailed, onPending)
+  3. on success: activateSubscription(user.id, "content"|"games", planId, days, internal_reference)
+     -> writes subscriptions/{uid}_{type} and payments/{internal_reference}
+
+================================================================================
+13. RECOMMENDED FIRESTORE INDEXES
+================================================================================
+Create these in Firebase console (Firestore -> Indexes -> Composite):
+
+  movies     : createdAt DESC                          (single-field, auto)
+  movies     : vjId ASC, createdAt DESC
+  movies     : featured ASC, createdAt DESC
+
+  episodes   : movieId ASC, season ASC, episode ASC
+  episodes   : vjId ASC, createdAt DESC
+
+  music      : createdAt DESC
+  music      : musicianId ASC, createdAt DESC
+
+  tiktok     : createdAt DESC
+  tiktok     : tiktokerId ASC, createdAt DESC
+
+  comments   : contentId ASC, contentType ASC, createdAt DESC
+
+  activities : createdAt DESC   (single-field is fine)
+
+================================================================================
+14. RECOMMENDED FIRESTORE SECURITY RULES (STARTER)
+================================================================================
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email in [
+          "luowatch0@gmail.com",
+          "mainplatform.nexus@gmail.com"
+        ];
+    }
+    function role() {
+      return get(/databases/$(db)/documents/profiles/$(request.auth.uid)).data.role;
+    }
+
+    match /profiles/{uid} {
+      allow read: if true;
+      allow create, update: if isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
+    match /movies/{id} {
+      allow read: if true;
+      allow create: if isSignedIn() && role() in ["vj","admin"];
+      allow update, delete: if isAdmin() ||
+        (isSignedIn() && resource.data.vjId == request.auth.uid);
+    }
+
+    match /episodes/{id} {
+      allow read: if true;
+      allow create, update, delete:
+        if isAdmin() ||
+           (isSignedIn() && request.resource.data.vjId == request.auth.uid);
+    }
+
+    match /music/{id} {
+      allow read: if true;
+      allow create: if isSignedIn() && role() in ["musician","admin"];
+      allow update, delete: if isAdmin() ||
+        (isSignedIn() && resource.data.musicianId == request.auth.uid);
+    }
+
+    match /tiktok/{id} {
+      allow read: if true;
+      allow create: if isSignedIn() && role() in ["tiktoker","admin"];
+      allow update, delete: if isAdmin() ||
+        (isSignedIn() && resource.data.tiktokerId == request.auth.uid);
+    }
+
+    match /channels/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /comments/{id} {
+      allow read: if true;
+      allow create: if isSignedIn() &&
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn();    // for likes
+      allow delete: if isAdmin();
+    }
+
+    match /activities/{id} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    match /subscriptions/{id} {
+      allow read: if isSignedIn() &&
+                  (isAdmin() || id.matches(request.auth.uid + "_.*"));
+      allow write: if isAdmin();   // write only via trusted backend (worker)
+    }
+
+    match /payments/{id} {
+      allow read: if isAdmin() ||
+                  (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+  }
+}
+
+NOTE: Current code writes subscriptions/payments directly from the client.
+Move that write to a backend / Cloud Function and lock the rules above for
+production.
+
+================================================================================
+15. GOTCHAS / TIPS
+================================================================================
+- All createdAt fields are serverTimestamp(); when reading immediately after
+  write they may be null for one tick — handle "createdAt: Timestamp | null".
+- onSnapshot returns an unsubscribe fn — every hook returns it from useEffect
+  to prevent leaks. Follow the same pattern when adding new hooks.
+- Default query `orderBy("createdAt","desc")` requires every doc to have
+  that field. addDoc helpers always set it; don't manually create docs
+  without it or they'll be missing from listings.
+- searchContent() pulls full collections — fine for hundreds of docs, not
+  thousands. Swap to Algolia/Typesense when you scale.
+- Hardcoded live TV channels live in src/hooks/useFirestore.ts (HARDCODED_CHANNELS)
+  and are MERGED with the Firestore channels collection.
+- Admin gate is by email list in SubscriptionContext.ADMIN_EMAILS. Move that
+  to a custom claim or a profiles.role === "admin" check for production.
+- Roles for creator dashboards are stored on profiles/{uid}.role. Keep that
+  field authoritative — don't duplicate it elsewhere.
+
+================================================================================
+16. QUICK-START CHECKLIST FOR ANOTHER AI / DEVELOPER
+================================================================================
+1. Create Firebase project, enable Auth (Email + Google), create Firestore (prod mode).
+2. Drop in firebaseConfig from section 2 (or your own).
+3. Copy src/lib/firebase.ts, src/lib/firestore.ts, src/hooks/useFirestore.ts as-is.
+4. Wrap app in <AuthProvider><SubscriptionProvider>...</SubscriptionProvider></AuthProvider>.
+5. In any component, just call:
+     const { movies, loading } = useMovies();
+     const { user } = useAuth();
+     const { hasContentAccess, openSubModal } = useSubscription();
+6. To write data, call the helpers in src/lib/firestore.ts (addMovie, addMusicVideo,
+   addTikTokVideo, addEpisode, addComment, logActivity, increment* ...).
+7. Upload media via uploadToS3() (Cloudflare R2) and store the returned URL
+   in the relevant Firestore field.
+8. Create the composite indexes from section 13.
+9. Paste the rules from section 14 (then harden subscriptions/payments).
+
+END OF FILE

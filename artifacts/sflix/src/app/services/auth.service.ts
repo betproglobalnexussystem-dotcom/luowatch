@@ -14,13 +14,17 @@ import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 export interface AppUser {
   uid: string;
+  firstName: string;
+  lastName: string;
   name: string;
   email: string;
   initials: string;
   plan: 'none' | 'basic' | 'standard' | 'premium';
-  role: 'user' | 'vj' | 'admin';
+  role: 'viewer' | 'vj' | 'musician' | 'tiktoker' | 'admin';
   photoURL?: string;
 }
+
+const ADMIN_EMAILS = ['luowatch0@gmail.com', 'mainplatform.nexus@gmail.com'];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -45,47 +49,58 @@ export class AuthService {
   }
 
   private async loadUserProfile(firebaseUser: FirebaseUser): Promise<void> {
-    const userRef = doc(this.firebase.db, 'users', firebaseUser.uid);
-    const snapshot = await getDoc(userRef);
+    const profileRef = doc(this.firebase.db, 'profiles', firebaseUser.uid);
+    const snapshot = await getDoc(profileRef);
 
-    let userData: Record<string, unknown> = {};
+    let profileData: Record<string, unknown> = {};
     if (snapshot.exists()) {
-      userData = snapshot.data() as Record<string, unknown>;
+      profileData = snapshot.data() as Record<string, unknown>;
+      await updateDoc(profileRef, { lastSeen: new Date().toISOString() });
     } else {
-      const namePart = firebaseUser.displayName || firebaseUser.email || 'User';
-      userData = {
-        name: namePart,
+      const displayName = firebaseUser.displayName || '';
+      const parts = displayName.split(' ');
+      const firstName = parts[0] || firebaseUser.email?.split('@')[0] || 'User';
+      const lastName = parts.slice(1).join(' ') || '';
+      const isAdmin = ADMIN_EMAILS.includes(firebaseUser.email || '');
+      profileData = {
+        firstName,
+        lastName,
         email: firebaseUser.email || '',
+        role: isAdmin ? 'admin' : 'viewer',
         photoURL: firebaseUser.photoURL || '',
-        plan: 'none',
-        role: 'user',
-        joinDate: new Date().toISOString().split('T')[0],
         lastSeen: new Date().toISOString(),
         watchCount: 0,
-        status: 'active'
+        status: 'active',
+        plan: 'none',
       };
-      await setDoc(userRef, userData);
+      await setDoc(profileRef, profileData);
     }
 
-    await updateDoc(userRef, { lastSeen: new Date().toISOString() });
-
-    const name = String(userData['name'] || firebaseUser.displayName || 'User');
+    const firstName = String(profileData['firstName'] || '');
+    const lastName = String(profileData['lastName'] || '');
+    const name = `${firstName} ${lastName}`.trim() || firebaseUser.displayName || 'User';
     const words = name.split(' ').filter((w: string) => w.length > 0);
     const initials = words.map((w: string) => w[0].toUpperCase()).join('').slice(0, 2) || 'U';
 
+    const isAdmin = ADMIN_EMAILS.includes(firebaseUser.email || '');
+    const storedRole = String(profileData['role'] || 'viewer') as AppUser['role'];
+    const role: AppUser['role'] = isAdmin ? 'admin' : storedRole;
+
     const appUser: AppUser = {
       uid: firebaseUser.uid,
+      firstName,
+      lastName,
       name,
-      email: String(userData['email'] || firebaseUser.email || ''),
+      email: String(profileData['email'] || firebaseUser.email || ''),
       initials,
-      plan: (userData['plan'] as AppUser['plan']) || 'none',
-      role: (userData['role'] as AppUser['role']) || 'user',
-      photoURL: String(userData['photoURL'] || firebaseUser.photoURL || '')
+      plan: (profileData['plan'] as AppUser['plan']) || 'none',
+      role,
+      photoURL: String(profileData['photoURL'] || firebaseUser.photoURL || ''),
     };
 
     this.currentUser.set(appUser);
     this.isLoggedIn.set(true);
-    this.hasSubscription.set(appUser.plan !== 'none');
+    this.hasSubscription.set(appUser.plan !== 'none' || appUser.role === 'admin' || appUser.role === 'vj');
   }
 
   async loginWithEmail(email: string, password: string): Promise<void> {
@@ -97,19 +112,22 @@ export class AuthService {
     await signInWithPopup(this.firebase.auth, provider);
   }
 
-  async register(email: string, password: string, name: string): Promise<void> {
+  async register(email: string, password: string, name: string, role: AppUser['role'] = 'viewer'): Promise<void> {
     const credential = await createUserWithEmailAndPassword(this.firebase.auth, email, password);
     await updateProfile(credential.user, { displayName: name });
-    const userRef = doc(this.firebase.db, 'users', credential.user.uid);
-    await setDoc(userRef, {
-      name,
+    const parts = name.trim().split(' ');
+    const firstName = parts[0] || name;
+    const lastName = parts.slice(1).join(' ') || '';
+    const profileRef = doc(this.firebase.db, 'profiles', credential.user.uid);
+    await setDoc(profileRef, {
+      firstName,
+      lastName,
       email,
+      role,
       plan: 'none',
-      role: 'user',
-      joinDate: new Date().toISOString().split('T')[0],
       lastSeen: new Date().toISOString(),
       watchCount: 0,
-      status: 'active'
+      status: 'active',
     });
   }
 
@@ -122,8 +140,8 @@ export class AuthService {
     if (user) {
       const updated = { ...user, plan: plan as AppUser['plan'] };
       this.currentUser.set(updated);
-      const userRef = doc(this.firebase.db, 'users', user.uid);
-      updateDoc(userRef, { plan });
+      const profileRef = doc(this.firebase.db, 'profiles', user.uid);
+      updateDoc(profileRef, { plan });
     }
     this.hasSubscription.set(true);
   }

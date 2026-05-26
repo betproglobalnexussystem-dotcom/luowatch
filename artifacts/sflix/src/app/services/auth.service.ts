@@ -10,7 +10,7 @@ import {
   User as FirebaseUser,
   updateProfile
 } from 'firebase/auth';
-import { ref, get, set, update } from 'firebase/database';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 export interface AppUser {
   uid: string;
@@ -45,12 +45,12 @@ export class AuthService {
   }
 
   private async loadUserProfile(firebaseUser: FirebaseUser): Promise<void> {
-    const userRef = ref(this.firebase.db, `users/${firebaseUser.uid}`);
-    const snapshot = await get(userRef);
+    const userRef = doc(this.firebase.db, 'users', firebaseUser.uid);
+    const snapshot = await getDoc(userRef);
 
     let userData: Record<string, unknown> = {};
     if (snapshot.exists()) {
-      userData = snapshot.val() as Record<string, unknown>;
+      userData = snapshot.data() as Record<string, unknown>;
     } else {
       const namePart = firebaseUser.displayName || firebaseUser.email || 'User';
       userData = {
@@ -64,10 +64,10 @@ export class AuthService {
         watchCount: 0,
         status: 'active'
       };
-      await set(userRef, userData);
+      await setDoc(userRef, userData);
     }
 
-    await update(userRef, { lastSeen: new Date().toISOString() });
+    await updateDoc(userRef, { lastSeen: new Date().toISOString() });
 
     const name = String(userData['name'] || firebaseUser.displayName || 'User');
     const words = name.split(' ').filter((w: string) => w.length > 0);
@@ -100,8 +100,8 @@ export class AuthService {
   async register(email: string, password: string, name: string): Promise<void> {
     const credential = await createUserWithEmailAndPassword(this.firebase.auth, email, password);
     await updateProfile(credential.user, { displayName: name });
-    const userRef = ref(this.firebase.db, `users/${credential.user.uid}`);
-    await set(userRef, {
+    const userRef = doc(this.firebase.db, 'users', credential.user.uid);
+    await setDoc(userRef, {
       name,
       email,
       plan: 'none',
@@ -122,8 +122,8 @@ export class AuthService {
     if (user) {
       const updated = { ...user, plan: plan as AppUser['plan'] };
       this.currentUser.set(updated);
-      const userRef = ref(this.firebase.db, `users/${user.uid}`);
-      update(userRef, { plan });
+      const userRef = doc(this.firebase.db, 'users', user.uid);
+      updateDoc(userRef, { plan });
     }
     this.hasSubscription.set(true);
   }

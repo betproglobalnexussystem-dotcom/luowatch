@@ -1,28 +1,34 @@
 import { Injectable } from '@angular/core';
 import { FirebaseService } from './firebase.service';
-import { ref, get, push, set, update, remove } from 'firebase/database';
+import {
+  collection, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, deleteDoc,
+  query, where, orderBy, increment, Firestore
+} from 'firebase/firestore';
 import { Movie, MovieSection, Series, Episode, VJ, User, Transaction, Activity, HeroSlide, AppComment } from '../models/movie.model';
 
 @Injectable({ providedIn: 'root' })
 export class MovieService {
-  constructor(private firebase: FirebaseService) {}
+  private db: Firestore;
 
-  private dbRef(path: string) {
-    return ref(this.firebase.db, path);
+  constructor(private firebase: FirebaseService) {
+    this.db = this.firebase.db;
   }
 
-  private objToArray<T>(obj: unknown, idField = 'id'): T[] {
-    if (!obj || typeof obj !== 'object') return [];
-    return Object.entries(obj as Record<string, unknown>).map(([key, val]) => ({
-      [idField]: key,
-      ...(val as Record<string, unknown>)
-    })) as T[];
+  private col(path: string) {
+    return collection(this.db, path);
+  }
+
+  private docRef(path: string, id: string) {
+    return doc(this.db, path, id);
+  }
+
+  private snapToArray<T>(snap: { docs: any[] }, idField = 'id'): T[] {
+    return snap.docs.map(d => ({ [idField]: d.id, ...d.data() })) as T[];
   }
 
   async getAllMovies(): Promise<Movie[]> {
-    const snap = await get(this.dbRef('movies'));
-    if (!snap.exists()) return [];
-    return this.objToArray<Movie>(snap.val());
+    const snap = await getDocs(this.col('movies'));
+    return this.snapToArray<Movie>(snap);
   }
 
   async getFeatured(): Promise<Movie[]> {
@@ -59,9 +65,9 @@ export class MovieService {
   }
 
   async getMovieById(id: string | number): Promise<Movie | undefined> {
-    const snap = await get(this.dbRef(`movies/${id}`));
+    const snap = await getDoc(this.docRef('movies', String(id)));
     if (!snap.exists()) return undefined;
-    return { id, ...snap.val() } as Movie;
+    return { id: snap.id, ...snap.data() } as Movie;
   }
 
   async getMovies(): Promise<Movie[]> {
@@ -85,155 +91,146 @@ export class MovieService {
   }
 
   async addMovie(data: Partial<Movie>): Promise<string> {
-    const newRef = await push(this.dbRef('movies'), {
+    const ref = await addDoc(this.col('movies'), {
       ...data,
       views: 0,
       createdAt: Date.now()
     });
-    return newRef.key!;
+    return ref.id;
   }
 
   async updateMovie(id: string | number, data: Partial<Movie>): Promise<void> {
-    await update(this.dbRef(`movies/${id}`), data as Record<string, unknown>);
+    await updateDoc(this.docRef('movies', String(id)), data as any);
   }
 
   async deleteMovie(id: string | number): Promise<void> {
-    await remove(this.dbRef(`movies/${id}`));
+    await deleteDoc(this.docRef('movies', String(id)));
   }
 
   async incrementViews(id: string | number): Promise<void> {
-    const snap = await get(this.dbRef(`movies/${id}/views`));
-    const current = snap.exists() ? (snap.val() as number) : 0;
-    await set(this.dbRef(`movies/${id}/views`), current + 1);
+    await updateDoc(this.docRef('movies', String(id)), { views: increment(1) });
   }
 
   async getVJs(): Promise<VJ[]> {
-    const snap = await get(this.dbRef('vjs'));
-    if (!snap.exists()) return [];
-    return this.objToArray<VJ>(snap.val());
+    const snap = await getDocs(this.col('vjs'));
+    return this.snapToArray<VJ>(snap);
   }
 
   async getUsers(): Promise<User[]> {
-    const snap = await get(this.dbRef('users'));
-    if (!snap.exists()) return [];
-    return this.objToArray<User>(snap.val());
+    const snap = await getDocs(this.col('users'));
+    return this.snapToArray<User>(snap);
   }
 
   async updateUser(uid: string, data: Partial<User>): Promise<void> {
-    await update(this.dbRef(`users/${uid}`), data as Record<string, unknown>);
+    await updateDoc(this.docRef('users', uid), data as any);
   }
 
   async updateVJ(id: string | number, data: Partial<VJ>): Promise<void> {
-    await update(this.dbRef(`vjs/${id}`), data as Record<string, unknown>);
+    await updateDoc(this.docRef('vjs', String(id)), data as any);
   }
 
   async getTransactions(vjId?: string): Promise<Transaction[]> {
-    const snap = await get(this.dbRef('transactions'));
-    if (!snap.exists()) return [];
-    let txs = this.objToArray<Transaction>(snap.val());
+    const snap = await getDocs(this.col('transactions'));
+    let txs = this.snapToArray<Transaction>(snap);
     if (vjId) txs = txs.filter(t => t.vjId === vjId);
     return txs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   async addTransaction(data: Partial<Transaction>): Promise<string> {
-    const txRef = await push(this.dbRef('transactions'), {
+    const ref = await addDoc(this.col('transactions'), {
       ...data,
       date: new Date().toISOString().split('T')[0]
     });
-    return txRef.key!;
+    return ref.id;
   }
 
   async updateTransaction(id: string | number, data: Partial<Transaction>): Promise<void> {
-    await update(this.dbRef(`transactions/${id}`), data as Record<string, unknown>);
+    await updateDoc(this.docRef('transactions', String(id)), data as any);
   }
 
   async getActivities(): Promise<Activity[]> {
-    const snap = await get(this.dbRef('activities'));
-    if (!snap.exists()) return [];
-    const acts = this.objToArray<Activity>(snap.val());
+    const snap = await getDocs(this.col('activities'));
+    const acts = this.snapToArray<Activity>(snap);
     return acts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   async addActivity(data: Partial<Activity>): Promise<void> {
-    await push(this.dbRef('activities'), {
+    await addDoc(this.col('activities'), {
       ...data,
       date: new Date().toISOString()
     });
   }
 
   async getHeroSlides(): Promise<HeroSlide[]> {
-    const snap = await get(this.dbRef('heroSlides'));
-    if (!snap.exists()) return [];
-    return this.objToArray<HeroSlide>(snap.val());
+    const snap = await getDocs(this.col('heroSlides'));
+    return this.snapToArray<HeroSlide>(snap);
   }
 
   async addHeroSlide(data: Partial<HeroSlide>): Promise<string> {
-    const slideRef = await push(this.dbRef('heroSlides'), {
+    const ref = await addDoc(this.col('heroSlides'), {
       ...data,
       active: true,
       createdAt: Date.now()
     });
-    return slideRef.key!;
+    return ref.id;
   }
 
   async updateHeroSlide(id: string | number, data: Partial<HeroSlide>): Promise<void> {
-    await update(this.dbRef(`heroSlides/${id}`), data as Record<string, unknown>);
+    await updateDoc(this.docRef('heroSlides', String(id)), data as any);
   }
 
   async deleteHeroSlide(id: string | number): Promise<void> {
-    await remove(this.dbRef(`heroSlides/${id}`));
+    await deleteDoc(this.docRef('heroSlides', String(id)));
   }
 
   async getSeries(): Promise<Series[]> {
-    const snap = await get(this.dbRef('series'));
-    if (!snap.exists()) return [];
-    const seriesList = this.objToArray<Series>(snap.val());
-    return seriesList.map(s => ({
-      ...s,
-      episodes: s.episodes && !Array.isArray(s.episodes)
-        ? Object.entries(s.episodes as unknown as Record<string, unknown>).map(([k, v]) => ({
-            id: k,
-            ...(v as Record<string, unknown>)
-          })) as Episode[]
-        : (Array.isArray(s.episodes) ? s.episodes : [])
-    }));
+    const snap = await getDocs(this.col('series'));
+    const seriesList = this.snapToArray<Series>(snap);
+    const withEpisodes = await Promise.all(
+      seriesList.map(async s => {
+        const epSnap = await getDocs(collection(this.db, `series/${s.id}/episodes`));
+        const episodes = epSnap.docs.map(d => ({ id: d.id, ...d.data() })) as Episode[];
+        return { ...s, episodes: episodes.length > 0 ? episodes : (Array.isArray(s.episodes) ? s.episodes : []) };
+      })
+    );
+    return withEpisodes;
   }
 
   async addSeries(data: Partial<Series>): Promise<string> {
-    const seriesRef = await push(this.dbRef('series'), {
+    const ref = await addDoc(this.col('series'), {
       ...data,
-      episodes: {},
       createdAt: Date.now()
     });
-    return seriesRef.key!;
+    return ref.id;
   }
 
   async addEpisode(seriesId: string | number, data: Partial<Episode>): Promise<string> {
-    const epRef = await push(this.dbRef(`series/${seriesId}/episodes`), data);
-    return epRef.key!;
+    const ref = await addDoc(collection(this.db, `series/${seriesId}/episodes`), data);
+    return ref.id;
   }
 
   async getComments(movieId: string | number): Promise<AppComment[]> {
-    const snap = await get(this.dbRef(`comments/${movieId}`));
-    if (!snap.exists()) return [];
-    const comments = this.objToArray<AppComment>(snap.val());
+    const q = query(this.col('comments'), where('movieId', '==', String(movieId)));
+    const snap = await getDocs(q);
+    const comments = snap.docs.map(d => ({ id: d.id, ...d.data() })) as AppComment[];
     return comments.sort((a, b) => b.createdAt - a.createdAt);
   }
 
   async addComment(movieId: string | number, data: Partial<AppComment>): Promise<void> {
-    await push(this.dbRef(`comments/${movieId}`), {
+    await addDoc(this.col('comments'), {
       ...data,
+      movieId: String(movieId),
       createdAt: Date.now()
     });
   }
 
   async getVJWallet(vjId: string): Promise<{ balance: number; totalEarned: number; totalWithdrawn: number; downloads: number }> {
-    const snap = await get(this.dbRef(`wallets/${vjId}`));
+    const snap = await getDoc(this.docRef('wallets', vjId));
     if (!snap.exists()) return { balance: 0, totalEarned: 0, totalWithdrawn: 0, downloads: 0 };
-    return snap.val() as { balance: number; totalEarned: number; totalWithdrawn: number; downloads: number };
+    return snap.data() as { balance: number; totalEarned: number; totalWithdrawn: number; downloads: number };
   }
 
   async updateVJWallet(vjId: string, data: Record<string, unknown>): Promise<void> {
-    await update(this.dbRef(`wallets/${vjId}`), data);
+    await setDoc(this.docRef('wallets', vjId), data, { merge: true });
   }
 }

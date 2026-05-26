@@ -627,11 +627,11 @@ export class VjDashboardComponent implements OnInit {
   showWithdrawModal = signal(false);
   withdrawStep = signal<'form' | 'success'>('form');
 
-  vjName = 'CineVault';
+  vjName = '';
   vjId: string | null = null;
-  walletBalance = 1240.50;
-  totalEarned = 1740.50;
-  downloadsCount = 1247;
+  walletBalance = 0;
+  totalEarned = 0;
+  downloadsCount = 0;
   lastWithdrawnAmount = 0;
   mobileMoney = { network: '', phone: '', amount: 0 };
   downloadedMovies: any[] = [];
@@ -658,12 +658,7 @@ export class VjDashboardComponent implements OnInit {
   heroForm = { movieId: '', imageUrl: '' };
   withdrawForm = { amount: 0, method: '', account: '' };
 
-  stats = [
-    { label: 'Total Movies', value: '42', color: 'rgba(255,39,28,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF6B5B" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 7 8 2"/></svg>' },
-    { label: 'Total Views', value: '715K', color: 'rgba(96,165,250,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' },
-    { label: 'Balance', value: '$1,240', color: 'rgba(74,222,128,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' },
-    { label: 'Series', value: '4', color: 'rgba(251,191,36,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>' },
-  ];
+  stats: { label: string; value: string; color: string; icon: string }[] = [];
 
   navItems: { id: VJSection, label: string, icon: string }[] = [
     { id: 'overview', label: 'Overview', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
@@ -717,10 +712,29 @@ export class VjDashboardComponent implements OnInit {
       : allTransactions;
     this.activities = activities;
     this.heroSlides = heroSlides;
-    const dlCounts = [312, 248, 187, 156, 143, 98, 72, 31];
     this.downloadedMovies = this.myMovies.slice(0, 8).map((m, i) => ({
-      ...m, dlCount: dlCounts[i] ?? Math.floor(Math.random() * 200 + 20)
+      ...m, dlCount: m.views ?? 0
     }));
+    this.computeStats();
+  }
+
+  computeStats() {
+    const totalViews = this.myMovies.reduce((sum, m) => sum + (m.views ?? 0), 0);
+    const viewsStr = totalViews >= 1000000
+      ? (totalViews / 1000000).toFixed(1) + 'M'
+      : totalViews >= 1000
+        ? (totalViews / 1000).toFixed(1) + 'K'
+        : String(totalViews);
+    const balStr = 'UGX ' + (this.walletBalance >= 1000
+      ? (this.walletBalance / 1000).toFixed(1) + 'K'
+      : this.walletBalance.toFixed(0));
+
+    this.stats = [
+      { label: 'Total Movies', value: String(this.myMovies.length), color: 'rgba(255,39,28,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF6B5B" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 7 8 2"/></svg>' },
+      { label: 'Total Views', value: viewsStr, color: 'rgba(96,165,250,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' },
+      { label: 'Balance', value: balStr, color: 'rgba(74,222,128,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' },
+      { label: 'Series', value: String(this.mySeries.length), color: 'rgba(251,191,36,0.15)', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>' },
+    ];
   }
 
   navigate(section: VJSection) {

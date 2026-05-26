@@ -451,6 +451,19 @@ function isMobileCordova() {
   // just to deal with this case would probably be a bad idea.
   !!(window["cordova"] || window["phonegap"] || window["PhoneGap"]) && /ios|iphone|ipod|ipad|android|blackberry|iemobile/i.test(getUA());
 }
+function isNode() {
+  const forceEnvironment = getDefaults()?.forceEnvironment;
+  if (forceEnvironment === "node") {
+    return true;
+  } else if (forceEnvironment === "browser") {
+    return false;
+  }
+  try {
+    return Object.prototype.toString.call(global.process) === "[object process]";
+  } catch (e) {
+    return false;
+  }
+}
 function isBrowser() {
   return typeof window !== "undefined" || isWebWorker();
 }
@@ -473,6 +486,12 @@ function isIE() {
 }
 function isNodeSdk() {
   return CONSTANTS.NODE_CLIENT === true || CONSTANTS.NODE_ADMIN === true;
+}
+function isSafari() {
+  return !isNode() && !!navigator.userAgent && navigator.userAgent.includes("Safari") && !navigator.userAgent.includes("Chrome");
+}
+function isSafariOrWebkit() {
+  return !isNode() && !!navigator.userAgent && (navigator.userAgent.includes("Safari") || navigator.userAgent.includes("WebKit")) && !navigator.userAgent.includes("Chrome");
 }
 function isIndexedDBAvailable() {
   try {
@@ -2515,6 +2534,7 @@ export {
   base64Encode,
   base64Decode,
   deepCopy,
+  getGlobal,
   getDefaultEmulatorHost,
   getDefaultEmulatorHostnameAndPort,
   getExperimentalSetting,
@@ -2527,6 +2547,9 @@ export {
   isReactNative,
   isIE,
   isNodeSdk,
+  isSafari,
+  isSafariOrWebkit,
+  isIndexedDBAvailable,
   FirebaseError,
   ErrorFactory,
   jsonEval,
@@ -2856,4 +2879,4 @@ export {
    * limitations under the License.
    *)
 */
-//# sourceMappingURL=chunk-WECLHK2N.js.map
+//# sourceMappingURL=chunk-L2GIBVIS.js.map

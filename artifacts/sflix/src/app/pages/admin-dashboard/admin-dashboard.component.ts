@@ -641,8 +641,8 @@ export class AdminDashboardComponent implements OnInit {
   vjAdjustAmount = 0;
   vjAdjustNote = '';
 
-  systemWallet = 12450.80;
-  totalRevenue = 28640.50;
+  systemWallet = 0;
+  totalRevenue = 0;
 
   allMovies: Movie[] = [];
   allSeries: Series[] = [];
@@ -664,12 +664,7 @@ export class AdminDashboardComponent implements OnInit {
     { label: 'Apr', pct: 70 }, { label: 'May', pct: 85 }, { label: 'Jun', pct: 62 },
   ];
 
-  adminStats = [
-    { label: 'Total Movies', value: '284', color: '#FF271C', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF6B5B" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 7 8 2"/></svg>' },
-    { label: 'Total Users', value: '12.4K', color: '#6366f1', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>' },
-    { label: 'Active VJs', value: '24', color: '#f59e0b', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>' },
-    { label: 'Revenue', value: '$28.6K', color: '#10b981', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' },
-  ];
+  adminStats: { label: string; value: string; color: string; icon: string }[] = [];
 
   navItems: { id: AdminSection, label: string, icon: string, badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
@@ -712,6 +707,30 @@ export class AdminDashboardComponent implements OnInit {
     this.activities = activities;
     this.heroSlides = heroSlides;
     this.loading = false;
+    this.computeStats();
+  }
+
+  computeStats() {
+    const completedTx = this.transactions.filter(t => t.status === 'completed' && t.type !== 'withdrawal');
+    this.totalRevenue = completedTx.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const withdrawn = this.transactions.filter(t => t.status === 'completed' && t.type === 'withdrawal')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    this.systemWallet = this.totalRevenue - withdrawn;
+
+    const activeVJs = this.vjs.filter(v => v.status === 'active').length;
+    const revenueStr = this.totalRevenue >= 1000
+      ? 'UGX ' + (this.totalRevenue / 1000).toFixed(1) + 'K'
+      : 'UGX ' + this.totalRevenue.toFixed(0);
+    const usersStr = this.users.length >= 1000
+      ? (this.users.length / 1000).toFixed(1) + 'K'
+      : String(this.users.length);
+
+    this.adminStats = [
+      { label: 'Total Movies', value: String(this.allMovies.length), color: '#FF271C', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF6B5B" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 7 8 2"/></svg>' },
+      { label: 'Total Users', value: usersStr, color: '#6366f1', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>' },
+      { label: 'Active VJs', value: String(activeVJs), color: '#f59e0b', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>' },
+      { label: 'Revenue', value: revenueStr, color: '#10b981', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' },
+    ];
   }
 
   get filteredMovies() {
